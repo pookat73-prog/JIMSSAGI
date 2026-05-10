@@ -100,12 +100,9 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .tag-local{background:var(--local-bg);color:var(--local-text)}
 .btn-local{background:none;border:1px solid var(--border);border-radius:6px;font-size:13px;padding:2px 5px;cursor:pointer;color:var(--text-muted);line-height:1;flex-shrink:0}
 .btn-local.on{border-color:var(--local-text);color:var(--local-text);background:var(--local-bg)}
-.btn-decant{background:none;border:1px solid var(--border);border-radius:6px;font-size:10px;padding:2px 7px;cursor:pointer;color:var(--text-muted);flex-shrink:0;letter-spacing:-.2px}
-.btn-decant.has-val{border-color:var(--accent-mid);color:var(--accent);background:var(--accent-light)}
 
-/* ── DECANT PANEL ── */
-.decant-panel{display:none;background:rgba(107,92,231,.05);border:1px solid var(--accent-mid);border-radius:10px;padding:10px 12px;margin:0 0 8px;gap:10px;flex-wrap:wrap;align-items:center}
-.decant-panel.open{display:flex}
+/* ── DECANT PANEL — hasMl가 true이면 항상 표시 ── */
+.decant-panel{display:flex;background:rgba(107,92,231,.05);border:1px solid var(--accent-mid);border-radius:10px;padding:10px 12px;margin:0 0 8px;gap:10px;flex-wrap:wrap;align-items:center}
 .dp-group{display:flex;flex-direction:column;gap:3px}
 .dp-group label{font-size:10px;color:var(--text-muted)}
 .dp-group input,.dp-group select{font-family:'Noto Sans KR',sans-serif;font-size:13px;border:1px solid var(--border);border-radius:6px;padding:5px 8px;background:var(--surface);color:var(--text-primary);width:90px}
@@ -157,7 +154,6 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .edit-mode #btn-edit-mode,.edit-mode #btn-categorize{display:none}
 .edit-mode .itm-cb{display:none}
 .edit-mode .btn-local{display:none}
-.edit-mode .btn-decant{display:none}
 .edit-mode .decant-panel{display:none!important}
 .edit-mode .itm-qty,.edit-mode .tag{display:none}
 .edit-mode .itm{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin:0 0 6px;padding:0 11px}
@@ -498,7 +494,6 @@ let editItemId= null;  // 모달 편집 중인 항목
 let editMode  = null;  // null | 'edit' (전체 편집) | 'categorize' (분류만)
 let db_data   = {};    // { [tripId]: { meta, items } }
 let _sortables= [];    // 활성 SortableJS 인스턴스 목록
-let _openDecants = new Set();    // 펼쳐둔 소분 패널 ID — 리렌더 후 복원
 let _expandedPouches = new Set(); // 분류 모드에서 펼쳐둔 주머니 — 리렌더 후 복원
 let _floorCollapsed = false;      // 분류 모드: 바닥 접힘 여부
 
@@ -755,12 +750,6 @@ function renderChecklist() {
     });
   }
 
-  // 소분 패널 펼침 상태 복원 (저장 시 자동 닫힘 방지)
-  if (!editMode) {
-    _openDecants.forEach(id => {
-      document.getElementById('dp-'+id)?.classList.add('open');
-    });
-  }
 }
 
 function updateProgress(items) {
@@ -935,15 +924,14 @@ function renderPackItem(item, nights) {
   if (item.ti) tagHtml += `<span class="tag tag-${item.ti}">${esc(item.tt||'')}</span>`;
   if (isLocal)  tagHtml += `<span class="tag tag-local">🛒 현지</span>`;
 
-  // decant — 펌프 사용량 입력 → 여행 총 필요 ml 계산
-  let decantBtn = '', decantPanel = '';
+  // decant — 펌프 사용량 입력 → 여행 총 필요 ml 계산. hasMl이면 패널 항상 표시.
+  let decantPanel = '';
   if (item.hasMl) {
     const pumpMl = calcPumpMl(item.pumpsPerDay, item.mlPerPump, nights);
     const hasPump = item.pumpsPerDay && item.mlPerPump;
     const mlp = item.mlPerPump || 0;
     const sizeChip = (val, label) =>
       `<button type="button" class="pump-chip${Math.abs(mlp-val)<0.01?' on':''}" onclick="APP.setPumpSize('${item.id}',${val})">${label}</button>`;
-    decantBtn = `<button class="btn-decant${hasPump?' has-val':''}" onclick="APP.toggleDecant('${item.id}')">소분</button>`;
     decantPanel = `
       <div class="decant-panel" id="dp-${item.id}">
         <div class="dp-section-label">펌프 사이즈</div>
@@ -977,7 +965,6 @@ function renderPackItem(item, nights) {
           <label class="itm-label" for="cb-${item.id}">${esc(item.label)}</label>
           ${qtyHtml}${tagHtml}${periodChip}${decantChip}
         </div>
-        ${decantBtn}
         <button class="btn-itm-edit" onclick="APP.editItem('${item.id}')">수정</button>
         <button class="btn-itm-del" onclick="APP.deleteItem('${item.id}')">삭제</button>
       </div>
@@ -1325,21 +1312,10 @@ const APP = {
     await dbUpd(`${DB_ROOT}/${tripId}/items/${itemId}`, { localBuy: !item.localBuy, checked: false });
   },
 
-  toggleDecant(itemId) {
-    const el = document.getElementById('dp-'+itemId);
-    if (!el) return;
-    el.classList.toggle('open');
-    if (el.classList.contains('open')) _openDecants.add(itemId);
-    else _openDecants.delete(itemId);
-  },
-
   async toggleHasMl(itemId) {
     const item = db_data[tripId]?.items?.[itemId];
     if (!item) return;
-    const newVal = !item.hasMl;
-    if (newVal) _openDecants.add(itemId);
-    else _openDecants.delete(itemId);
-    await dbUpd(`${DB_ROOT}/${tripId}/items/${itemId}`, { hasMl: newVal });
+    await dbUpd(`${DB_ROOT}/${tripId}/items/${itemId}`, { hasMl: !item.hasMl });
   },
 
   async savePump(itemId, ppdVal, mlpVal) {
