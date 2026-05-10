@@ -1308,10 +1308,12 @@ document.querySelectorAll('.modal-overlay').forEach(o => {
 });
 
 // ── PWA MANIFEST ───────────────────────
-// 별도 SVG 파일을 사용해 안드로이드 WebAPK 빌드의 안정성 확보.
-// 동일 아이콘에 purpose="any maskable" 둘 다 선언 — 콘텐츠가 중앙 80%
-// 안전 영역 안에 있으므로 maskable 크롭에도 잘리지 않음.
-const ICON_PATH = '/JIMSSAGI/icon.svg';
+// 안드로이드 WebAPK는 PNG 아이콘일 때 가장 안정적이고 크롬 배지 없는
+// 진짜 앱으로 설치됨. SVG는 보조로 추가, 콘텐츠가 중앙 80% 안전
+// 영역 안에 있어 maskable 크롭에도 잘리지 않음.
+const ICON_PNG_192 = '/JIMSSAGI/icon-192.png';
+const ICON_PNG_512 = '/JIMSSAGI/icon-512.png';
+const ICON_SVG     = '/JIMSSAGI/icon.svg';
 
 const mani = JSON.stringify({
   name:'짐싸기', short_name:'짐싸기',
@@ -1320,9 +1322,9 @@ const mani = JSON.stringify({
   display:'standalone',
   background_color:'#6b5ce7', theme_color:'#6b5ce7',
   icons:[
-    {src:ICON_PATH, sizes:'192x192', type:'image/svg+xml', purpose:'any maskable'},
-    {src:ICON_PATH, sizes:'512x512', type:'image/svg+xml', purpose:'any maskable'},
-    {src:ICON_PATH, sizes:'any',     type:'image/svg+xml', purpose:'any maskable'}
+    {src:ICON_PNG_192, sizes:'192x192', type:'image/png', purpose:'any maskable'},
+    {src:ICON_PNG_512, sizes:'512x512', type:'image/png', purpose:'any maskable'},
+    {src:ICON_SVG,     sizes:'any',     type:'image/svg+xml', purpose:'any maskable'}
   ]
 });
 const mLink = document.createElement('link');
@@ -1333,7 +1335,7 @@ document.head.appendChild(mLink);
 // iOS 홈 화면 아이콘
 const apl = document.createElement('link');
 apl.rel = 'apple-touch-icon';
-apl.href = ICON_PATH;
+apl.href = ICON_PNG_192;
 document.head.appendChild(apl);
 
 // ── SERVICE WORKER (PWA installability) ──
