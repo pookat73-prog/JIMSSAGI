@@ -9,6 +9,9 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="짐싸기">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
+<meta http-equiv="Pragma" content="no-cache">
+<meta http-equiv="Expires" content="0">
 <script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500&display=swap');
@@ -101,8 +104,10 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .btn-local{background:none;border:1px solid var(--border);border-radius:6px;font-size:13px;padding:2px 5px;cursor:pointer;color:var(--text-muted);line-height:1;flex-shrink:0}
 .btn-local.on{border-color:var(--local-text);color:var(--local-text);background:var(--local-bg)}
 
-/* ── DECANT PANEL — hasMl가 true이면 항상 표시 ── */
-.decant-panel{display:flex;background:rgba(107,92,231,.05);border:1px solid var(--accent-mid);border-radius:10px;padding:10px 12px;margin:0 0 8px;gap:10px;flex-wrap:wrap;align-items:center}
+/* ── DECANT PANEL — 칩으로 펴고 접음 ── */
+.decant-panel{position:relative;display:flex;background:rgba(107,92,231,.05);border:1px solid var(--accent-mid);border-radius:10px;padding:10px 12px;margin:0 0 8px;gap:10px;flex-wrap:wrap;align-items:center}
+.dp-close{position:absolute;top:6px;right:8px;font-family:inherit;background:none;border:none;font-size:14px;color:var(--text-muted);cursor:pointer;padding:2px 6px;line-height:1;border-radius:6px}
+.dp-close:active{background:var(--danger);color:#fff}
 .dp-group{display:flex;flex-direction:column;gap:3px}
 .dp-group label{font-size:10px;color:var(--text-muted)}
 .dp-group input,.dp-group select{font-family:'Noto Sans KR',sans-serif;font-size:13px;border:1px solid var(--border);border-radius:6px;padding:5px 8px;background:var(--surface);color:var(--text-primary);width:90px}
@@ -169,7 +174,12 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .itm-period.empty{background:transparent;color:var(--text-muted);border:1px dashed var(--border);font-weight:400;opacity:.6}
 .itm-period.empty:active{opacity:1;background:var(--bg)}
 
+.btn-inline-edit{font-family:inherit;background:none;border:none;color:var(--text-muted);font-size:12px;cursor:pointer;padding:1px 3px;border-radius:4px;line-height:1;flex-shrink:0;opacity:.45}
+.btn-inline-edit:active{opacity:1;background:var(--accent-light);color:var(--accent)}
+.edit-mode .btn-inline-edit{display:none}
+.done .btn-inline-edit{opacity:.25}
 .itm-decant{display:inline-flex;align-items:center;gap:2px;font-size:10px;padding:1px 6px;border-radius:9px;font-weight:500;cursor:pointer;flex-shrink:0;line-height:1.5;background:var(--info-bg);color:var(--info-text)}
+.itm-decant.open{background:var(--accent);color:#fff}
 .itm-decant.empty{background:transparent;color:var(--text-muted);border:1px dashed var(--border);font-weight:400;opacity:.6}
 .itm-decant.empty:active{opacity:1;background:var(--bg)}
 
@@ -496,6 +506,7 @@ let db_data   = {};    // { [tripId]: { meta, items } }
 let _sortables= [];    // 활성 SortableJS 인스턴스 목록
 let _expandedPouches = new Set(); // 분류 모드에서 펼쳐둔 주머니 — 리렌더 후 복원
 let _floorCollapsed = false;      // 분류 모드: 바닥 접힘 여부
+let _expandedDecants = new Set(); // 펼쳐둔 소분 패널 (UI 전용, 시작 시 항상 접힘)
 
 // ── HELPERS ────────────────────────────
 const esc = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -879,44 +890,36 @@ function renderPackItem(item, nights) {
   const isLocal = item.localBuy;
   const isDone  = item.checked;
 
-  // qty badge (perDay 우선 → qtyF)
+  // qty badge — 정기 아이템은 칩에 총 개수를 표시하므로 별도 배지 없음
   let qtyHtml = '';
   const q = itemQty(item, nights);
-  if (q != null) {
-    if (item.perDayEvery && item.perDayCount) {
-      const lbl = item.perDayEvery === 1 ? `하루 ${item.perDayCount}개` : `${item.perDayEvery}일에 ${item.perDayCount}개`;
-      qtyHtml = `<span class="itm-qty">${lbl} → ×${q}</span>`;
-    } else {
-      qtyHtml = `<span class="itm-qty">${nights}박 기준 ×${q}</span>`;
-    }
+  if (q != null && !(item.perDayEvery && item.perDayCount)) {
+    qtyHtml = `<span class="itm-qty">×${q}</span>`;
   }
 
-  // 정기 설정 칩 — 여행 일수 알면 "총 N개" 표시, 모르면 주기 설명
+  // 정기 칩 — 총 개수만 칩에 표시
   let periodChip = '';
   if (item.perDayEvery && item.perDayCount) {
     const subtitle = item.perDayEvery === 1
       ? `하루 ${item.perDayCount}개`
       : `${item.perDayEvery}일에 ${item.perDayCount}개`;
-    let lbl;
-    if (nights > 0) {
-      const total = calcQtyPeriodic(item.perDayEvery, item.perDayCount, nights);
-      lbl = `${total}개 필요`;
-    } else {
-      lbl = subtitle;
-    }
+    const lbl = nights > 0
+      ? `${calcQtyPeriodic(item.perDayEvery, item.perDayCount, nights)}개`
+      : subtitle;
     periodChip = `<span class="itm-period" title="${subtitle}" onclick="event.preventDefault();event.stopPropagation();APP.openPeriodPicker('${item.id}', this)">🔁 ${lbl}</span>`;
   } else {
     periodChip = `<span class="itm-period empty" onclick="event.preventDefault();event.stopPropagation();APP.openPeriodPicker('${item.id}', this)">🔁 정기?</span>`;
   }
 
-  // 소분 토글 칩 — 클릭 한 번으로 켜고 끔. 켜면 패널 자동 펼침.
+  // 소분 칩 — 패널 열기/닫기 토글. 끄기는 패널 안 ✕ 버튼으로.
   let decantChip = '';
+  const decantOpen = _expandedDecants.has(item.id);
   if (item.hasMl) {
     const pumpMl = calcPumpMl(item.pumpsPerDay, item.mlPerPump, nights);
     const info = pumpMl != null ? `${pumpMl}ml 필요` : '소분';
-    decantChip = `<span class="itm-decant" onclick="event.preventDefault();event.stopPropagation();APP.toggleHasMl('${item.id}')" title="탭하여 소분 끄기">💧 ${info}</span>`;
+    decantChip = `<span class="itm-decant${decantOpen?' open':''}" onclick="event.preventDefault();event.stopPropagation();APP.toggleDecantPanel('${item.id}')" title="탭하여 패널 ${decantOpen?'접기':'펴기'}">💧 ${info}</span>`;
   } else {
-    decantChip = `<span class="itm-decant empty" onclick="event.preventDefault();event.stopPropagation();APP.toggleHasMl('${item.id}')" title="탭하여 소분 켜기">💧 소분?</span>`;
+    decantChip = `<span class="itm-decant empty" onclick="event.preventDefault();event.stopPropagation();APP.enableDecant('${item.id}')" title="탭하여 소분 켜기">💧 소분?</span>`;
   }
 
   // tag
@@ -924,9 +927,9 @@ function renderPackItem(item, nights) {
   if (item.ti) tagHtml += `<span class="tag tag-${item.ti}">${esc(item.tt||'')}</span>`;
   if (isLocal)  tagHtml += `<span class="tag tag-local">🛒 현지</span>`;
 
-  // decant — 펌프 사용량 입력 → 여행 총 필요 ml 계산. hasMl이면 패널 항상 표시.
+  // decant — 패널은 칩으로 펼쳤을 때만 표시. ✕ 버튼으로 소분 끄기.
   let decantPanel = '';
-  if (item.hasMl) {
+  if (item.hasMl && decantOpen) {
     const pumpMl = calcPumpMl(item.pumpsPerDay, item.mlPerPump, nights);
     const hasPump = item.pumpsPerDay && item.mlPerPump;
     const mlp = item.mlPerPump || 0;
@@ -934,6 +937,7 @@ function renderPackItem(item, nights) {
       `<button type="button" class="pump-chip${Math.abs(mlp-val)<0.01?' on':''}" onclick="APP.setPumpSize('${item.id}',${val})">${label}</button>`;
     decantPanel = `
       <div class="decant-panel" id="dp-${item.id}">
+        <button class="dp-close" onclick="APP.disableDecant('${item.id}')" title="소분 끄기">✕</button>
         <div class="dp-section-label">펌프 사이즈</div>
         <div class="pump-chips">
           ${sizeChip(0.6,'소 0.6ml')}
@@ -963,6 +967,7 @@ function renderPackItem(item, nights) {
           onchange="APP.toggleCheck('${item.id}',this.checked)">
         <div class="itm-main">
           <label class="itm-label" for="cb-${item.id}">${esc(item.label)}</label>
+          <button class="btn-inline-edit" onclick="event.preventDefault();event.stopPropagation();APP.editItem('${item.id}')" title="수정">✎</button>
           ${qtyHtml}${tagHtml}${periodChip}${decantChip}
         </div>
         <button class="btn-itm-edit" onclick="APP.editItem('${item.id}')">수정</button>
@@ -979,7 +984,7 @@ function renderSimpleItem(item, nights = 0) {
       ? `하루 ${item.perDayCount}개`
       : `${item.perDayEvery}일에 ${item.perDayCount}개`;
     const lbl = nights > 0
-      ? `${calcQtyPeriodic(item.perDayEvery, item.perDayCount, nights)}개 필요`
+      ? `${calcQtyPeriodic(item.perDayEvery, item.perDayCount, nights)}개`
       : subtitle;
     periodChip = `<span class="itm-period" title="${subtitle}" onclick="event.preventDefault();event.stopPropagation();APP.openPeriodPicker('${item.id}', this)">🔁 ${lbl}</span>`;
   } else {
@@ -994,6 +999,7 @@ function renderSimpleItem(item, nights = 0) {
           onchange="APP.toggleCheck('${item.id}',this.checked)">
         <div class="itm-main">
           <label class="itm-label" for="cb-${item.id}">${esc(item.label)}</label>
+          <button class="btn-inline-edit" onclick="event.preventDefault();event.stopPropagation();APP.editItem('${item.id}')" title="수정">✎</button>
           ${item.ti?`<span class="tag tag-${item.ti}">${esc(item.tt||'')}</span>`:''}
           ${periodChip}
         </div>
@@ -1163,6 +1169,7 @@ const APP = {
     tripId = id;
     curTab = 'pack';
     editMode = null;
+    _expandedDecants.clear();
     const m = db_data[id]?.meta || {};
     document.getElementById('hd-name').textContent    = m.name  || '';
     document.getElementById('hd-nights').textContent  = m.nights ? nightsLabel(m.nights) : '';
@@ -1312,10 +1319,26 @@ const APP = {
     await dbUpd(`${DB_ROOT}/${tripId}/items/${itemId}`, { localBuy: !item.localBuy, checked: false });
   },
 
-  async toggleHasMl(itemId) {
+  toggleDecantPanel(itemId) {
+    if (_expandedDecants.has(itemId)) _expandedDecants.delete(itemId);
+    else _expandedDecants.add(itemId);
+    renderChecklist();
+  },
+
+  async enableDecant(itemId) {
     const item = db_data[tripId]?.items?.[itemId];
     if (!item) return;
-    await dbUpd(`${DB_ROOT}/${tripId}/items/${itemId}`, { hasMl: !item.hasMl });
+    _expandedDecants.add(itemId);
+    await dbUpd(`${DB_ROOT}/${tripId}/items/${itemId}`, { hasMl: true });
+  },
+
+  async disableDecant(itemId) {
+    const item = db_data[tripId]?.items?.[itemId];
+    if (!item) return;
+    _expandedDecants.delete(itemId);
+    await dbUpd(`${DB_ROOT}/${tripId}/items/${itemId}`, {
+      hasMl: false, pumpsPerDay: null, mlPerPump: null
+    });
   },
 
   async savePump(itemId, ppdVal, mlpVal) {
@@ -1628,7 +1651,7 @@ document.getElementById('btn-edit').onclick      = () => openTripModal(tripId);
 document.getElementById('btn-edit-mode').onclick = () => APP.toggleEditMode();
 document.getElementById('btn-categorize').onclick= () => APP.toggleCategorizeMode();
 document.getElementById('btn-save-edit').onclick = () => APP.exitEditMode();
-document.getElementById('btn-back').onclick      = () => { tripId=null; editMode=null; destroySortables(); showScreen('s-home'); renderHome(); };
+document.getElementById('btn-back').onclick      = () => { tripId=null; editMode=null; _expandedDecants.clear(); destroySortables(); showScreen('s-home'); renderHome(); };
 document.getElementById('btn-save-trip').onclick = saveTripHandler;
 document.getElementById('btn-del-trip').onclick  = deleteTripHandler;
 document.getElementById('m-trip-close').onclick  = closeTripModal;
