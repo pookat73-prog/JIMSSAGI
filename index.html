@@ -171,6 +171,10 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .itm-period.empty{background:transparent;color:var(--text-muted);border:1px dashed var(--border);font-weight:400;opacity:.6}
 .itm-period.empty:active{opacity:1;background:var(--bg)}
 
+.btn-inline-edit{font-family:inherit;background:none;border:none;color:var(--text-muted);font-size:12px;cursor:pointer;padding:1px 3px;border-radius:4px;line-height:1;flex-shrink:0;opacity:.45}
+.btn-inline-edit:active{opacity:1;background:var(--accent-light);color:var(--accent)}
+.edit-mode .btn-inline-edit{display:none}
+.done .btn-inline-edit{opacity:.25}
 .itm-decant{display:inline-flex;align-items:center;gap:2px;font-size:10px;padding:1px 6px;border-radius:9px;font-weight:500;cursor:pointer;flex-shrink:0;line-height:1.5;background:var(--info-bg);color:var(--info-text)}
 .itm-decant.open{background:var(--accent);color:#fff}
 .itm-decant.empty{background:transparent;color:var(--text-muted);border:1px dashed var(--border);font-weight:400;opacity:.6}
@@ -883,31 +887,22 @@ function renderPackItem(item, nights) {
   const isLocal = item.localBuy;
   const isDone  = item.checked;
 
-  // qty badge (perDay 우선 → qtyF)
+  // qty badge — 정기 아이템은 칩에 총 개수를 표시하므로 별도 배지 없음
   let qtyHtml = '';
   const q = itemQty(item, nights);
-  if (q != null) {
-    if (item.perDayEvery && item.perDayCount) {
-      const lbl = item.perDayEvery === 1 ? `하루 ${item.perDayCount}개` : `${item.perDayEvery}일에 ${item.perDayCount}개`;
-      qtyHtml = `<span class="itm-qty">${lbl} → ×${q}</span>`;
-    } else {
-      qtyHtml = `<span class="itm-qty">${nights}박 기준 ×${q}</span>`;
-    }
+  if (q != null && !(item.perDayEvery && item.perDayCount)) {
+    qtyHtml = `<span class="itm-qty">×${q}</span>`;
   }
 
-  // 정기 설정 칩 — 여행 일수 알면 "총 N개" 표시, 모르면 주기 설명
+  // 정기 칩 — 총 개수만 칩에 표시
   let periodChip = '';
   if (item.perDayEvery && item.perDayCount) {
     const subtitle = item.perDayEvery === 1
       ? `하루 ${item.perDayCount}개`
       : `${item.perDayEvery}일에 ${item.perDayCount}개`;
-    let lbl;
-    if (nights > 0) {
-      const total = calcQtyPeriodic(item.perDayEvery, item.perDayCount, nights);
-      lbl = `${total}개 필요`;
-    } else {
-      lbl = subtitle;
-    }
+    const lbl = nights > 0
+      ? `${calcQtyPeriodic(item.perDayEvery, item.perDayCount, nights)}개`
+      : subtitle;
     periodChip = `<span class="itm-period" title="${subtitle}" onclick="event.preventDefault();event.stopPropagation();APP.openPeriodPicker('${item.id}', this)">🔁 ${lbl}</span>`;
   } else {
     periodChip = `<span class="itm-period empty" onclick="event.preventDefault();event.stopPropagation();APP.openPeriodPicker('${item.id}', this)">🔁 정기?</span>`;
@@ -969,6 +964,7 @@ function renderPackItem(item, nights) {
           onchange="APP.toggleCheck('${item.id}',this.checked)">
         <div class="itm-main">
           <label class="itm-label" for="cb-${item.id}">${esc(item.label)}</label>
+          <button class="btn-inline-edit" onclick="event.preventDefault();event.stopPropagation();APP.editItem('${item.id}')" title="수정">✎</button>
           ${qtyHtml}${tagHtml}${periodChip}${decantChip}
         </div>
         <button class="btn-itm-edit" onclick="APP.editItem('${item.id}')">수정</button>
@@ -985,7 +981,7 @@ function renderSimpleItem(item, nights = 0) {
       ? `하루 ${item.perDayCount}개`
       : `${item.perDayEvery}일에 ${item.perDayCount}개`;
     const lbl = nights > 0
-      ? `${calcQtyPeriodic(item.perDayEvery, item.perDayCount, nights)}개 필요`
+      ? `${calcQtyPeriodic(item.perDayEvery, item.perDayCount, nights)}개`
       : subtitle;
     periodChip = `<span class="itm-period" title="${subtitle}" onclick="event.preventDefault();event.stopPropagation();APP.openPeriodPicker('${item.id}', this)">🔁 ${lbl}</span>`;
   } else {
@@ -1000,6 +996,7 @@ function renderSimpleItem(item, nights = 0) {
           onchange="APP.toggleCheck('${item.id}',this.checked)">
         <div class="itm-main">
           <label class="itm-label" for="cb-${item.id}">${esc(item.label)}</label>
+          <button class="btn-inline-edit" onclick="event.preventDefault();event.stopPropagation();APP.editItem('${item.id}')" title="수정">✎</button>
           ${item.ti?`<span class="tag tag-${item.ti}">${esc(item.tt||'')}</span>`:''}
           ${periodChip}
         </div>
