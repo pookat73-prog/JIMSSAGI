@@ -1046,17 +1046,21 @@ function renderPackItem(item, nights) {
 }
 
 function renderSimpleItem(item, nights = 0) {
+  // 출발 전 할 일은 1회성 작업이라 정기 칩 숨김
+  const showPeriod = item.section !== 'todo';
   let periodChip = '';
-  if (item.perDayEvery && item.perDayCount) {
-    const subtitle = item.perDayEvery === 1
-      ? `하루 ${item.perDayCount}개`
-      : `${item.perDayEvery}일에 ${item.perDayCount}개`;
-    const lbl = nights > 0
-      ? `${calcQtyPeriodic(item.perDayEvery, item.perDayCount, nights)}개`
-      : subtitle;
-    periodChip = `<span class="itm-period" title="${subtitle}" onclick="event.preventDefault();event.stopPropagation();APP.openPeriodPicker('${item.id}', this)">🔁 ${lbl}</span>`;
-  } else {
-    periodChip = `<span class="itm-period empty" onclick="event.preventDefault();event.stopPropagation();APP.openPeriodPicker('${item.id}', this)">🔁 정기?</span>`;
+  if (showPeriod) {
+    if (item.perDayEvery && item.perDayCount) {
+      const subtitle = item.perDayEvery === 1
+        ? `하루 ${item.perDayCount}개`
+        : `${item.perDayEvery}일에 ${item.perDayCount}개`;
+      const lbl = nights > 0
+        ? `${calcQtyPeriodic(item.perDayEvery, item.perDayCount, nights)}개`
+        : subtitle;
+      periodChip = `<span class="itm-period" title="${subtitle}" onclick="event.preventDefault();event.stopPropagation();APP.openPeriodPicker('${item.id}', this)">🔁 ${lbl}</span>`;
+    } else {
+      periodChip = `<span class="itm-period empty" onclick="event.preventDefault();event.stopPropagation();APP.openPeriodPicker('${item.id}', this)">🔁 정기?</span>`;
+    }
   }
   return `
     <div class="itm ${item.checked?'done':''}" id="itm-${item.id}" data-id="${item.id}">
