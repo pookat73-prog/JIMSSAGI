@@ -141,10 +141,25 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 
 /* ── EDIT MODE ── */
 .icon-btn.on{background:var(--accent-light);color:var(--accent)}
+.btn-save-edit{display:none;font-family:inherit;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:12px;padding:6px 12px;font-weight:500;cursor:pointer}
+.edit-mode .btn-save-edit{display:inline-block}
+.edit-mode #btn-edit-mode{display:none}
 .edit-mode .itm-cb{display:none}
 .edit-mode .btn-local{display:none}
 .edit-mode .btn-decant{display:none}
 .edit-mode .decant-panel{display:none!important}
+.edit-mode .itm-qty,.edit-mode .tag{display:none}
+.edit-mode .itm{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin:0 0 6px;padding:0 11px}
+.edit-mode .itm-row{padding:11px 0;gap:8px}
+.edit-mode .itm.is-local .itm-label{color:var(--text-primary)}
+.edit-mode .itm.done .itm-label{text-decoration:none;color:var(--text-primary)}
+.edit-mode .cat-items{min-height:14px;padding:2px 0 4px}
+.edit-mode .sec{background:var(--bg);border:1px solid var(--border-soft);border-radius:12px;padding:10px 11px;margin-bottom:11px}
+.edit-mode .sec-title-row{padding-bottom:8px}
+.edit-mode .sec-title{font-size:11px}
+.edit-mode .itm-period{display:inline-flex;align-items:center;gap:3px;font-size:10px;background:var(--ok-bg);color:var(--ok-text);padding:2px 7px;border-radius:9px;font-weight:500;cursor:pointer;flex-shrink:0}
+.edit-mode .itm-period.empty{background:var(--bg);color:var(--text-muted);border:1px dashed var(--border)}
+.itm-period{display:none}
 .drag-handle{display:none;color:var(--text-muted);font-size:18px;cursor:grab;padding:0 6px;line-height:1;flex-shrink:0;touch-action:none;user-select:none}
 .edit-mode .drag-handle{display:inline-block}
 .btn-itm-edit,.btn-itm-del{display:none;font-family:inherit;background:none;border:1px solid var(--border);border-radius:6px;font-size:11px;padding:3px 8px;cursor:pointer;color:var(--text-muted);flex-shrink:0;line-height:1.4}
@@ -175,6 +190,12 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .dp-result.calc{background:var(--ok-bg);color:var(--ok-text)}
 .dp-apply{font-family:inherit;font-size:11px;background:var(--accent);color:#fff;border:none;border-radius:6px;padding:5px 10px;cursor:pointer;align-self:flex-end}
 .dp-apply:active{opacity:.85}
+
+/* ── PUMP SIZE CHIPS ── */
+.pump-chips{display:flex;gap:6px;flex-wrap:wrap;width:100%}
+.pump-chip{font-family:inherit;font-size:11px;background:var(--surface);border:1px solid var(--border);color:var(--text-secondary);border-radius:8px;padding:5px 10px;cursor:pointer;line-height:1.3}
+.pump-chip.on{background:var(--accent-light);border-color:var(--accent-mid);color:var(--accent);font-weight:500}
+.pump-chip-row{font-size:11px;color:var(--text-muted);width:100%;margin-bottom:3px}
 
 /* ── INPUT GROUP ── */
 .row-2{display:flex;gap:9px}
@@ -213,6 +234,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       <span class="hd-nights" id="hd-nights"></span>
     </div>
     <button class="icon-btn" id="btn-edit-mode" title="편집 모드">✏️</button>
+    <button class="btn-save-edit" id="btn-save-edit">저장</button>
     <button class="icon-btn" id="btn-edit">···</button>
   </header>
   <div class="prog-wrap">
@@ -287,10 +309,16 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 
       <div class="cb-row">
         <input type="checkbox" id="inp-ipd-on">
-        <label for="inp-ipd-on">정기 사용량 자동 계산</label>
+        <label for="inp-ipd-on">정기 사용량 자동 계산 (양말·렌즈 등)</label>
       </div>
       <div class="section-card" id="inp-ipd-box" style="display:none">
-        <div class="section-card-title">며칠에 몇 개?</div>
+        <div class="section-card-title">며칠에 몇 개 사용?</div>
+        <div class="pump-chips" id="pd-presets">
+          <button type="button" class="pump-chip" data-every="1" data-count="1">매일 1개</button>
+          <button type="button" class="pump-chip" data-every="2" data-count="1">2일에 1개</button>
+          <button type="button" class="pump-chip" data-every="3" data-count="1">3일에 1개</button>
+          <button type="button" class="pump-chip" data-every="1" data-count="2">매일 2개</button>
+        </div>
         <div class="row-2">
           <div>
             <label>매</label>
@@ -301,7 +329,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
             <input type="number" id="inp-ipd-count" min="1" step="1" value="1" placeholder="개">
           </div>
         </div>
-        <div class="help-text">예: 매 1일에 1개 = 하루 1개 / 매 2일에 1개 = 이틀에 1개<br>여행 일수에 맞춰 자동으로 수량이 계산돼요.</div>
+        <div class="help-text">예: 매일 1개 = 하루 한 켤레 / 2일에 1개 = 이틀치 한 개<br>여행 일수에 맞춰 자동으로 필요 수량이 나와요.</div>
         <div class="calc-result" id="inp-ipd-preview" style="display:none"></div>
       </div>
 
@@ -311,17 +339,23 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       </div>
       <div class="section-card" id="inp-ipump-box" style="display:none">
         <div class="section-card-title">펌프 기반 자동 계산 (선택)</div>
+        <div class="pump-chip-row">펌프 크기 선택</div>
+        <div class="pump-chips" id="pump-size-presets">
+          <button type="button" class="pump-chip" data-mlp="0.6">소 0.6ml</button>
+          <button type="button" class="pump-chip" data-mlp="1.25">중 1~1.5ml</button>
+          <button type="button" class="pump-chip" data-mlp="2.5">대 2~3ml</button>
+        </div>
         <div class="row-2">
           <div>
             <label>하루 펌프 수</label>
-            <input type="number" id="inp-ipump-pd" min="0" step="0.5" placeholder="예: 5">
+            <input type="number" id="inp-ipump-pd" min="0" step="0.5" placeholder="예: 3">
           </div>
           <div>
             <label>1펌프 = ml</label>
-            <input type="number" id="inp-ipump-mlp" min="0" step="0.05" placeholder="예: 0.3">
+            <input type="number" id="inp-ipump-mlp" min="0" step="0.05" placeholder="예: 0.6">
           </div>
         </div>
-        <div class="help-text">하루 사용 펌프 × 일수 × 1펌프 ml = 필요 ml 자동 계산 → 소분용기 사이즈 결정에 사용돼요.</div>
+        <div class="help-text">소(0.6ml)·중(1.25ml)·대(2.5ml) 칩을 누르면 1펌프 ml이 자동 채워져요.<br>하루 펌프 × 1펌프 ml × 일수 = 총 필요 ml → 용기 사이즈 추천.</div>
         <div class="calc-result" id="inp-ipump-preview" style="display:none"></div>
       </div>
     </div>
@@ -371,6 +405,7 @@ let editItemId= null;  // 모달 편집 중인 항목
 let editMode  = false; // 편집(드래그) 모드
 let db_data   = {};    // { [tripId]: { meta, items } }
 let _sortables= [];    // 활성 SortableJS 인스턴스 목록
+let _openDecants = new Set(); // 펼쳐둔 소분 패널 ID — 리렌더 후 복원
 
 // ── HELPERS ────────────────────────────
 const esc = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -610,6 +645,13 @@ function renderChecklist() {
   else                        el.innerHTML = renderSimple(items, data.meta, 'recommend');
 
   if (editMode) initSortables();
+
+  // 소분 패널 펼침 상태 복원 (저장 시 자동 닫힘 방지)
+  if (!editMode) {
+    _openDecants.forEach(id => {
+      document.getElementById('dp-'+id)?.classList.add('open');
+    });
+  }
 }
 
 function updateProgress(items) {
@@ -686,6 +728,17 @@ function renderPackItem(item, nights) {
     }
   }
 
+  // 편집 모드용 정기 설정 칩 (현재 설정 보여주거나 비어있음 표시)
+  let periodChip = '';
+  if (item.perDayEvery && item.perDayCount) {
+    const lbl = item.perDayEvery === 1
+      ? `하루 ${item.perDayCount}개`
+      : `${item.perDayEvery}일에 ${item.perDayCount}개`;
+    periodChip = `<span class="itm-period" onclick="APP.editItem('${item.id}')">🔁 ${lbl}</span>`;
+  } else {
+    periodChip = `<span class="itm-period empty" onclick="APP.editItem('${item.id}')">🔁 정기?</span>`;
+  }
+
   // tag
   let tagHtml = '';
   if (item.ti) tagHtml += `<span class="tag tag-${item.ti}">${esc(item.tt||'')}</span>`;
@@ -700,9 +753,17 @@ function renderPackItem(item, nights) {
     const needed = hasVal ? calcDecant(effectiveMl, item.cml||50) : null;
     decantBtn = `<button class="btn-decant${hasVal?' has-val':''}" onclick="APP.toggleDecant('${item.id}')">소분</button>`;
     const hasPump = item.pumpsPerDay && item.mlPerPump;
+    const mlp = item.mlPerPump || 0;
+    const sizeChip = (val, label) =>
+      `<button type="button" class="pump-chip${Math.abs(mlp-val)<0.01?' on':''}" onclick="APP.setPumpSize('${item.id}',${val})">${label}</button>`;
     const pumpRow = `
         <div class="dp-divider"></div>
         <div class="dp-section-label">펌프 기반 자동 계산${hasPump?'':' (선택)'}</div>
+        <div class="pump-chips">
+          ${sizeChip(0.6,'소 0.6ml')}
+          ${sizeChip(1.25,'중 1~1.5ml')}
+          ${sizeChip(2.5,'대 2~3ml')}
+        </div>
         <div class="dp-group">
           <label>하루 펌프</label>
           <input type="number" id="ppd-${item.id}" min="0" step="0.5" value="${item.pumpsPerDay||''}"
@@ -747,7 +808,7 @@ function renderPackItem(item, nights) {
           onchange="APP.toggleCheck('${item.id}',this.checked)">
         <div class="itm-main">
           <label class="itm-label" for="cb-${item.id}">${esc(item.label)}</label>
-          ${qtyHtml}${tagHtml}
+          ${qtyHtml}${tagHtml}${periodChip}
         </div>
         ${decantBtn}
         <button class="btn-local${isLocal?' on':''}" onclick="APP.toggleLocal('${item.id}')" title="현지구매 전환">🛒</button>
@@ -759,6 +820,15 @@ function renderPackItem(item, nights) {
 }
 
 function renderSimpleItem(item) {
+  let periodChip = '';
+  if (item.perDayEvery && item.perDayCount) {
+    const lbl = item.perDayEvery === 1
+      ? `하루 ${item.perDayCount}개`
+      : `${item.perDayEvery}일에 ${item.perDayCount}개`;
+    periodChip = `<span class="itm-period" onclick="APP.editItem('${item.id}')">🔁 ${lbl}</span>`;
+  } else {
+    periodChip = `<span class="itm-period empty" onclick="APP.editItem('${item.id}')">🔁 정기?</span>`;
+  }
   return `
     <div class="itm ${item.checked?'done':''}" id="itm-${item.id}" data-id="${item.id}">
       <div class="itm-row">
@@ -769,6 +839,7 @@ function renderSimpleItem(item) {
         <div class="itm-main">
           <label class="itm-label" for="cb-${item.id}">${esc(item.label)}</label>
           ${item.ti?`<span class="tag tag-${item.ti}">${esc(item.tt||'')}</span>`:''}
+          ${periodChip}
         </div>
         <button class="btn-itm-edit" onclick="APP.editItem('${item.id}')">수정</button>
         <button class="btn-itm-del" onclick="APP.deleteItem('${item.id}')">삭제</button>
@@ -951,7 +1022,11 @@ const APP = {
   },
 
   toggleDecant(itemId) {
-    document.getElementById('dp-'+itemId)?.classList.toggle('open');
+    const el = document.getElementById('dp-'+itemId);
+    if (!el) return;
+    el.classList.toggle('open');
+    if (el.classList.contains('open')) _openDecants.add(itemId);
+    else _openDecants.delete(itemId);
   },
 
   async saveDecant(itemId, mlVal, cmlVal) {
@@ -982,6 +1057,14 @@ const APP = {
     const ppd = document.getElementById('ppd-'+itemId)?.value;
     const mlp = document.getElementById('mlp-'+itemId)?.value;
     return APP.savePump(itemId, ppd, mlp);
+  },
+
+  async setPumpSize(itemId, mlp) {
+    const inp = document.getElementById('mlp-'+itemId);
+    if (inp) inp.value = mlp;
+    const ppd = document.getElementById('ppd-'+itemId)?.value;
+    await APP.savePump(itemId, ppd, mlp);
+    renderChecklist();
   },
 
   async applyPumpMl(itemId) {
@@ -1161,6 +1244,7 @@ function openItemModal(itemId = null) {
   document.getElementById('inp-ipd-box').style.display = pdOn ? 'flex' : 'none';
   document.getElementById('inp-ipd-every').value = item.perDayEvery || 1;
   document.getElementById('inp-ipd-count').value = item.perDayCount || 1;
+  refreshPdChipState();
   updatePdPreview();
 
   // 펌프 / 소분
@@ -1168,6 +1252,7 @@ function openItemModal(itemId = null) {
   document.getElementById('inp-ipump-box').style.display = item.hasMl ? 'flex' : 'none';
   document.getElementById('inp-ipump-pd').value  = item.pumpsPerDay || '';
   document.getElementById('inp-ipump-mlp').value = item.mlPerPump   || '';
+  refreshPumpChipState();
   updatePumpPreview();
 
   document.getElementById('m-item').style.display = 'flex';
@@ -1263,6 +1348,7 @@ async function deleteItemFromModal() {
 document.getElementById('btn-new').onclick       = () => openTripModal(null);
 document.getElementById('btn-edit').onclick      = () => openTripModal(tripId);
 document.getElementById('btn-edit-mode').onclick = () => APP.toggleEditMode();
+document.getElementById('btn-save-edit').onclick = () => APP.toggleEditMode();
 document.getElementById('btn-back').onclick      = () => { tripId=null; editMode=false; destroySortables(); showScreen('s-home'); renderHome(); };
 document.getElementById('btn-save-trip').onclick = saveTripHandler;
 document.getElementById('btn-del-trip').onclick  = deleteTripHandler;
@@ -1286,7 +1372,46 @@ document.getElementById('inp-iml').addEventListener('change', e => {
   updatePumpPreview();
 });
 document.getElementById('inp-ipump-pd').addEventListener('input', updatePumpPreview);
-document.getElementById('inp-ipump-mlp').addEventListener('input', updatePumpPreview);
+document.getElementById('inp-ipump-mlp').addEventListener('input', () => { updatePumpPreview(); refreshPumpChipState(); });
+
+// 정기 사용량 프리셋 칩
+document.getElementById('pd-presets').addEventListener('click', e => {
+  const chip = e.target.closest('.pump-chip');
+  if (!chip) return;
+  document.getElementById('inp-ipd-on').checked = true;
+  document.getElementById('inp-ipd-box').style.display = 'flex';
+  document.getElementById('inp-ipd-every').value = chip.dataset.every;
+  document.getElementById('inp-ipd-count').value = chip.dataset.count;
+  refreshPdChipState();
+  updatePdPreview();
+});
+
+// 펌프 사이즈 프리셋 칩 (모달)
+document.getElementById('pump-size-presets').addEventListener('click', e => {
+  const chip = e.target.closest('.pump-chip');
+  if (!chip) return;
+  document.getElementById('inp-iml').checked = true;
+  document.getElementById('inp-ipump-box').style.display = 'flex';
+  document.getElementById('inp-ipump-mlp').value = chip.dataset.mlp;
+  refreshPumpChipState();
+  updatePumpPreview();
+});
+
+function refreshPdChipState() {
+  const e = parseInt(document.getElementById('inp-ipd-every').value) || 0;
+  const c = parseInt(document.getElementById('inp-ipd-count').value) || 0;
+  document.querySelectorAll('#pd-presets .pump-chip').forEach(ch => {
+    ch.classList.toggle('on', +ch.dataset.every===e && +ch.dataset.count===c);
+  });
+}
+function refreshPumpChipState() {
+  const v = parseFloat(document.getElementById('inp-ipump-mlp').value) || 0;
+  document.querySelectorAll('#pump-size-presets .pump-chip').forEach(ch => {
+    ch.classList.toggle('on', Math.abs(+ch.dataset.mlp - v) < 0.01);
+  });
+}
+document.getElementById('inp-ipd-every').addEventListener('input', refreshPdChipState);
+document.getElementById('inp-ipd-count').addEventListener('input', refreshPdChipState);
 
 document.querySelectorAll('.tab').forEach(t => {
   t.onclick = function() {
