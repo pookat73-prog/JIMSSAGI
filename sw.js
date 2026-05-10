@@ -2,7 +2,7 @@
 // 설치 가능 요건(installability)을 만족하기 위한 최소 SW.
 // Firebase 실시간 동기화에 의존하므로 캐시 전략은 단순한 network-first.
 
-const VERSION = 'v1';
+const VERSION = 'v2';
 const CACHE   = 'jimssagi-' + VERSION;
 
 self.addEventListener('install', e => {

@@ -1166,6 +1166,7 @@ const APP = {
     tripId = id;
     curTab = 'pack';
     editMode = null;
+    _expandedDecants.clear();
     const m = db_data[id]?.meta || {};
     document.getElementById('hd-name').textContent    = m.name  || '';
     document.getElementById('hd-nights').textContent  = m.nights ? nightsLabel(m.nights) : '';
@@ -1647,7 +1648,7 @@ document.getElementById('btn-edit').onclick      = () => openTripModal(tripId);
 document.getElementById('btn-edit-mode').onclick = () => APP.toggleEditMode();
 document.getElementById('btn-categorize').onclick= () => APP.toggleCategorizeMode();
 document.getElementById('btn-save-edit').onclick = () => APP.exitEditMode();
-document.getElementById('btn-back').onclick      = () => { tripId=null; editMode=null; destroySortables(); showScreen('s-home'); renderHome(); };
+document.getElementById('btn-back').onclick      = () => { tripId=null; editMode=null; _expandedDecants.clear(); destroySortables(); showScreen('s-home'); renderHome(); };
 document.getElementById('btn-save-trip').onclick = saveTripHandler;
 document.getElementById('btn-del-trip').onclick  = deleteTripHandler;
 document.getElementById('m-trip-close').onclick  = closeTripModal;
