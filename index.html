@@ -379,6 +379,11 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       </select>
 
       <div class="cb-row">
+        <input type="checkbox" id="inp-ilocal">
+        <label for="inp-ilocal">🛒 현지에서 구매 (안 챙겨도 됨)</label>
+      </div>
+
+      <div class="cb-row">
         <input type="checkbox" id="inp-ipd-on">
         <label for="inp-ipd-on">정기 사용량 자동 계산 (양말·렌즈 등)</label>
       </div>
@@ -906,7 +911,7 @@ function renderPackItem(item, nights) {
   // tag
   let tagHtml = '';
   if (item.ti) tagHtml += `<span class="tag tag-${item.ti}">${esc(item.tt||'')}</span>`;
-  if (isLocal)  tagHtml += `<span class="tag tag-local">🛒 현지구매</span>`;
+  if (isLocal)  tagHtml += `<span class="tag tag-local">🛒 현지</span>`;
 
   // decant
   let decantBtn = '', decantPanel = '';
@@ -975,7 +980,6 @@ function renderPackItem(item, nights) {
           ${qtyHtml}${tagHtml}${periodChip}${decantChip}
         </div>
         ${decantBtn}
-        <button class="btn-local${isLocal?' on':''}" onclick="APP.toggleLocal('${item.id}')" title="현지구매 전환">🛒</button>
         <button class="btn-itm-edit" onclick="APP.editItem('${item.id}')">수정</button>
         <button class="btn-itm-del" onclick="APP.deleteItem('${item.id}')">삭제</button>
       </div>
@@ -1546,6 +1550,9 @@ function openItemModal(itemId = null) {
   Object.values(db_data[tripId]?.items||{}).forEach(i => { if (i.cat) cats.add(i.cat); });
   dl.innerHTML = [...cats].map(c => `<option value="${esc(c)}">`).join('');
 
+  // 현지 구매
+  document.getElementById('inp-ilocal').checked = !!item.localBuy;
+
   // 정기 사용량
   const pdOn = !!(item.perDayEvery && item.perDayCount);
   document.getElementById('inp-ipd-on').checked = pdOn;
@@ -1608,6 +1615,7 @@ async function saveItemHandler() {
   const cat    = document.getElementById('inp-icat').value.trim() || '기타';
   const section= document.getElementById('inp-itab').value;
   const hasMl  = document.getElementById('inp-iml').checked;
+  const localBuy = document.getElementById('inp-ilocal').checked;
   const pdOn   = document.getElementById('inp-ipd-on').checked;
   const pdEvery= pdOn ? (parseInt(document.getElementById('inp-ipd-every').value) || null) : null;
   const pdCount= pdOn ? (parseInt(document.getElementById('inp-ipd-count').value) || null) : null;
@@ -1617,11 +1625,14 @@ async function saveItemHandler() {
 
   if (editItemId) {
     const cur = db_data[tripId]?.items?.[editItemId] || {};
+    const becameLocal = localBuy && !cur.localBuy;
     await dbUpd(`${DB_ROOT}/${tripId}/items/${editItemId}`, {
-      label, cat, section,
+      label, cat, section, localBuy,
       perDayEvery: pdEvery, perDayCount: pdCount,
       hasMl,
       pumpsPerDay: ppd, mlPerPump: mlp,
+      // 현지구매로 새로 전환되면 체크 해제
+      ...(becameLocal ? { checked:false } : {}),
       // 소분 끄면 ml/cml/펌프 초기화
       ...(hasMl ? {} : { ml:null, pumpsPerDay:null, mlPerPump:null })
     });
@@ -1633,7 +1644,7 @@ async function saveItemHandler() {
   const id = 'i' + Date.now();
   await dbSet(`${DB_ROOT}/${tripId}/items/${id}`, {
     id, label, cat, sub:null, section,
-    checked:false, localBuy:false,
+    checked:false, localBuy,
     qty:null, qtyF:null,
     perDayEvery: pdEvery, perDayCount: pdCount,
     hasMl, ml:null, cml:50,
