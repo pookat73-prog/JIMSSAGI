@@ -9,6 +9,7 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="짐싸기">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -137,6 +138,53 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .hd-info{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:1px}
 .hd-name{font-size:15px;font-weight:500;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:180px}
 .hd-nights{font-size:11px;color:var(--text-muted)}
+
+/* ── EDIT MODE ── */
+.icon-btn.on{background:var(--accent-light);color:var(--accent)}
+.edit-mode .itm-cb{display:none}
+.edit-mode .btn-local{display:none}
+.edit-mode .btn-decant{display:none}
+.edit-mode .decant-panel{display:none!important}
+.drag-handle{display:none;color:var(--text-muted);font-size:18px;cursor:grab;padding:0 6px;line-height:1;flex-shrink:0;touch-action:none;user-select:none}
+.edit-mode .drag-handle{display:inline-block}
+.btn-itm-edit,.btn-itm-del{display:none;font-family:inherit;background:none;border:1px solid var(--border);border-radius:6px;font-size:11px;padding:3px 8px;cursor:pointer;color:var(--text-muted);flex-shrink:0;line-height:1.4}
+.btn-itm-del{color:var(--danger);border-color:var(--danger)}
+.edit-mode .btn-itm-edit,.edit-mode .btn-itm-del{display:inline-block}
+.cat-actions{display:none;gap:4px;align-items:center}
+.edit-mode .cat-actions{display:flex}
+.btn-cat{font-family:inherit;background:none;border:none;font-size:13px;padding:3px 6px;cursor:pointer;color:var(--text-muted);line-height:1}
+.btn-cat.danger{color:var(--danger)}
+.sec-title-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:5px;border-bottom:1px solid var(--border);margin-bottom:3px}
+.sec-title-row .sec-title{padding:0;border:none;margin:0;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.cat-handle{display:none;color:var(--text-muted);font-size:16px;cursor:grab;padding:0 4px 0 0;flex-shrink:0;touch-action:none;user-select:none}
+.edit-mode .cat-handle{display:inline-block}
+.add-cat-btn{font-family:inherit;width:100%;background:none;border:1px dashed var(--border);color:var(--text-muted);border-radius:10px;padding:11px;font-size:13px;cursor:pointer;margin-top:8px;display:none}
+.edit-mode .add-cat-btn{display:block}
+.add-cat-btn:active{background:var(--accent-light);color:var(--accent);border-color:var(--accent-mid)}
+.sortable-ghost{opacity:.4}
+.sortable-chosen{background:var(--accent-light)}
+.itm.dragging{background:var(--accent-light);border-radius:8px}
+.edit-mode .notice{display:none}
+.edit-mode .subsec-label{display:none}
+.edit-hint{display:none;font-size:11px;color:var(--text-muted);background:var(--info-bg);border-radius:8px;padding:8px 10px;margin-bottom:10px;line-height:1.6}
+.edit-mode .edit-hint{display:block}
+
+/* ── DECANT PANEL EXTENSIONS ── */
+.dp-divider{width:100%;height:1px;background:var(--accent-mid);opacity:.3;margin:2px 0}
+.dp-section-label{font-size:10px;color:var(--accent);font-weight:500;width:100%;letter-spacing:.05em}
+.dp-result.calc{background:var(--ok-bg);color:var(--ok-text)}
+.dp-apply{font-family:inherit;font-size:11px;background:var(--accent);color:#fff;border:none;border-radius:6px;padding:5px 10px;cursor:pointer;align-self:flex-end}
+.dp-apply:active{opacity:.85}
+
+/* ── INPUT GROUP ── */
+.row-2{display:flex;gap:9px}
+.row-2>div{flex:1;display:flex;flex-direction:column;gap:4px}
+.row-2 input{font-family:'Noto Sans KR',sans-serif;font-size:14px;border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--text-primary);width:100%}
+.row-2 label{font-size:11px;color:var(--text-muted)}
+.section-card{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:11px;display:flex;flex-direction:column;gap:8px}
+.section-card-title{font-size:12px;color:var(--text-secondary);font-weight:500}
+.help-text{font-size:11px;color:var(--text-muted);line-height:1.5}
+.calc-result{font-size:12px;background:var(--accent-light);color:var(--accent);border-radius:6px;padding:6px 10px;font-weight:500;text-align:center}
 </style>
 </head>
 <body>
@@ -164,6 +212,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       <span class="hd-name" id="hd-name"></span>
       <span class="hd-nights" id="hd-nights"></span>
     </div>
+    <button class="icon-btn" id="btn-edit-mode" title="편집 모드">✏️</button>
     <button class="icon-btn" id="btn-edit">···</button>
   </header>
   <div class="prog-wrap">
@@ -215,18 +264,19 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
   </div>
 </div>
 
-<!-- ─── Modal: Add Item ─── -->
+<!-- ─── Modal: Add/Edit Item ─── -->
 <div id="m-item" class="modal-overlay" style="display:none">
   <div class="modal">
     <div class="modal-hd">
-      <span>항목 추가</span>
+      <span id="m-item-title">항목 추가</span>
       <button class="modal-close" id="m-item-close">×</button>
     </div>
     <div class="modal-body">
       <label>항목 이름</label>
       <input type="text" id="inp-ilabel" placeholder="예: 선글라스">
       <label>카테고리</label>
-      <input type="text" id="inp-icat" placeholder="예: 가방·소지품">
+      <input type="text" id="inp-icat" list="cat-suggest" placeholder="예: 가방·소지품">
+      <datalist id="cat-suggest"></datalist>
       <label>탭</label>
       <select id="inp-itab">
         <option value="pack">짐 목록</option>
@@ -234,12 +284,49 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
         <option value="local">현지 구매</option>
         <option value="recommend">추천</option>
       </select>
+
+      <div class="cb-row">
+        <input type="checkbox" id="inp-ipd-on">
+        <label for="inp-ipd-on">정기 사용량 자동 계산</label>
+      </div>
+      <div class="section-card" id="inp-ipd-box" style="display:none">
+        <div class="section-card-title">며칠에 몇 개?</div>
+        <div class="row-2">
+          <div>
+            <label>매</label>
+            <input type="number" id="inp-ipd-every" min="1" step="1" value="1" placeholder="일">
+          </div>
+          <div>
+            <label>개수</label>
+            <input type="number" id="inp-ipd-count" min="1" step="1" value="1" placeholder="개">
+          </div>
+        </div>
+        <div class="help-text">예: 매 1일에 1개 = 하루 1개 / 매 2일에 1개 = 이틀에 1개<br>여행 일수에 맞춰 자동으로 수량이 계산돼요.</div>
+        <div class="calc-result" id="inp-ipd-preview" style="display:none"></div>
+      </div>
+
       <div class="cb-row">
         <input type="checkbox" id="inp-iml">
         <label for="inp-iml">화장품 소분 계산기 추가</label>
       </div>
+      <div class="section-card" id="inp-ipump-box" style="display:none">
+        <div class="section-card-title">펌프 기반 자동 계산 (선택)</div>
+        <div class="row-2">
+          <div>
+            <label>하루 펌프 수</label>
+            <input type="number" id="inp-ipump-pd" min="0" step="0.5" placeholder="예: 5">
+          </div>
+          <div>
+            <label>1펌프 = ml</label>
+            <input type="number" id="inp-ipump-mlp" min="0" step="0.05" placeholder="예: 0.3">
+          </div>
+        </div>
+        <div class="help-text">하루 사용 펌프 × 일수 × 1펌프 ml = 필요 ml 자동 계산 → 소분용기 사이즈 결정에 사용돼요.</div>
+        <div class="calc-result" id="inp-ipump-preview" style="display:none"></div>
+      </div>
     </div>
     <div class="modal-ft">
+      <button class="btn-danger" id="btn-del-item" style="display:none">삭제</button>
       <button class="btn-primary" id="btn-save-item">추가</button>
     </div>
   </div>
@@ -277,10 +364,13 @@ try {
 }
 
 // ── STATE ──────────────────────────────
-let tripId  = null;  // 현재 보고 있는 트립
-let curTab  = 'pack';
-let editId  = null;  // 모달 편집 중인 트립
-let db_data = {};    // { [tripId]: { meta, items } }
+let tripId    = null;  // 현재 보고 있는 트립
+let curTab    = 'pack';
+let editId    = null;  // 모달 편집 중인 트립
+let editItemId= null;  // 모달 편집 중인 항목
+let editMode  = false; // 편집(드래그) 모드
+let db_data   = {};    // { [tripId]: { meta, items } }
+let _sortables= [];    // 활성 SortableJS 인스턴스 목록
 
 // ── HELPERS ────────────────────────────
 const esc = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -295,9 +385,34 @@ function calcQty(formula, n) {
   try { return Math.max(1, Math.round(eval(formula))); } catch { return 1; }
 }
 
+// 정기 사용량 (every N일에 count개) 기반 수량 계산
+function calcQtyPeriodic(perDayEvery, perDayCount, nights) {
+  if (!perDayEvery || !perDayCount) return null;
+  if (nights <= 0) return perDayCount;
+  // 여행 일수(=nights+1)동안 every일에 count개 = ceil((nights+1)/every)*count
+  const days = nights + 1;
+  return Math.max(1, Math.ceil(days / perDayEvery) * perDayCount);
+}
+
+// 펌프 기반 필요 ml 계산
+function calcPumpMl(pumpsPerDay, mlPerPump, nights) {
+  if (!pumpsPerDay || !mlPerPump) return null;
+  const days = Math.max(1, nights + 1);
+  return +(pumpsPerDay * mlPerPump * days).toFixed(2);
+}
+
 function calcDecant(ml, cml) {
   if (!ml || !cml) return null;
   return Math.ceil(ml / cml);
+}
+
+// 항목의 표시 수량 결정 (perDay 우선, 없으면 qtyF)
+function itemQty(item, nights) {
+  if (item.perDayEvery && item.perDayCount) {
+    return calcQtyPeriodic(item.perDayEvery, item.perDayCount, nights);
+  }
+  if (item.qtyF && nights > 0) return calcQty(item.qtyF, nights);
+  return null;
 }
 
 function nightsLabel(n) {
@@ -404,12 +519,35 @@ function makeTemplate(nights) {
       id, label:t.l, cat:t.c, sub:t.sub||null,
       section: sec, checked:false, localBuy:false,
       qty, qtyF:t.f||null,
+      perDayEvery:null, perDayCount:null,
       hasMl:!!(t.ml), ml:null, cml:50,
+      pumpsPerDay:null, mlPerPump:null,
       ti:t.ti||null, tt:t.tt||null,
       ord:i
     };
   });
   return out;
+}
+
+// 카테고리 순서 가져오기 (meta.catOrder 우선, 없으면 첫 등장 순)
+// 편집 모드에서는 빈 카테고리도 표시하도록 saved를 모두 포함
+function getCatOrder(items, section, meta) {
+  const present = [];
+  items.filter(i => i.section === section).forEach(i => {
+    const c = i.cat || '기타';
+    if (!present.includes(c)) present.push(c);
+  });
+  const saved = meta?.catOrder?.[section] || [];
+  const result = editMode
+    ? [...saved]
+    : saved.filter(c => present.includes(c));
+  present.forEach(c => { if (!result.includes(c)) result.push(c); });
+  return result;
+}
+
+function destroySortables() {
+  _sortables.forEach(s => { try { s.destroy(); } catch(e){} });
+  _sortables = [];
 }
 
 // ── HOME RENDER ────────────────────────
@@ -457,13 +595,21 @@ function renderChecklist() {
   if (!data) return;
   const items = Object.values(data.items||{}).sort((a,b)=>(a.ord||0)-(b.ord||0));
 
+  destroySortables();
   updateProgress(items);
+
+  const screen = document.getElementById('s-trip');
+  screen.classList.toggle('edit-mode', editMode);
+  document.getElementById('btn-edit-mode').classList.toggle('on', editMode);
+  document.getElementById('btn-edit-mode').textContent = editMode ? '✓' : '✏️';
 
   const el = document.getElementById('cl-content');
   if (curTab === 'pack')      el.innerHTML = renderPack(items, data.meta);
-  else if (curTab === 'todo') el.innerHTML = renderSimple(items, 'todo');
-  else if (curTab === 'local')el.innerHTML = renderLocal(items);
-  else                        el.innerHTML = renderSimple(items, 'recommend');
+  else if (curTab === 'todo') el.innerHTML = renderSimple(items, data.meta, 'todo');
+  else if (curTab === 'local')el.innerHTML = renderLocal(items, data.meta);
+  else                        el.innerHTML = renderSimple(items, data.meta, 'recommend');
+
+  if (editMode) initSortables();
 }
 
 function updateProgress(items) {
@@ -480,34 +626,64 @@ function updateProgress(items) {
 function renderPack(items, meta) {
   const nights = meta?.nights || 0;
   const pack   = items.filter(i => i.section==='pack');
-  const cats   = [...new Set(pack.map(i => i.cat))];
+  const cats   = getCatOrder(items, 'pack', meta);
 
   let html = `<div class="notice notice-warn">노트북 기내 반입 시 캐리어 위탁 수하물 자동 확정 · 액체류 100ml 초과 제품은 위탁 분류</div>`;
+  html += renderEditHint();
+  html += `<div id="cat-list" data-section="pack">`;
 
   cats.forEach(cat => {
-    const ci = pack.filter(i => i.cat === cat);
-    html += `<div class="sec"><div class="sec-title">${esc(cat)}</div>`;
-    const subs = [...new Set(ci.map(i => i.sub||''))];
-    subs.forEach(sub => {
-      if (sub) html += `<div class="subsec-label">— ${esc(sub)}</div>`;
-      ci.filter(i=>(i.sub||'')===sub).forEach(item => {
-        html += renderPackItem(item, nights);
-      });
-    });
-    html += `</div>`;
+    html += renderCategory(pack, cat, nights, 'pack');
   });
+
+  html += `</div>`;
+  html += `<button class="add-cat-btn" data-section="pack">＋ 새 카테고리</button>`;
   return html;
+}
+
+function renderCategory(sectionItems, cat, nights, section) {
+  const ci = sectionItems.filter(i => (i.cat||'기타') === cat).sort((a,b)=>(a.ord||0)-(b.ord||0));
+  const subs = [...new Set(ci.map(i => i.sub||''))];
+  let html = `<div class="sec" data-cat="${esc(cat)}">
+    <div class="sec-title-row">
+      <span class="cat-handle" title="카테고리 이동">⋮⋮</span>
+      <span class="sec-title">${esc(cat)}</span>
+      <span class="cat-actions">
+        <button class="btn-cat" onclick="APP.renameCategory('${esc(section)}','${esc(cat).replace(/'/g,"\\'")}')">이름</button>
+        <button class="btn-cat danger" onclick="APP.deleteCategory('${esc(section)}','${esc(cat).replace(/'/g,"\\'")}')">삭제</button>
+      </span>
+    </div>
+    <div class="cat-items" data-cat="${esc(cat)}" data-section="${esc(section)}">`;
+  subs.forEach(sub => {
+    if (sub) html += `<div class="subsec-label">— ${esc(sub)}</div>`;
+    ci.filter(i=>(i.sub||'')===sub).forEach(item => {
+      html += section === 'pack'
+        ? renderPackItem(item, nights)
+        : renderSimpleItem(item);
+    });
+  });
+  html += `</div></div>`;
+  return html;
+}
+
+function renderEditHint() {
+  return `<div class="edit-hint">⋮⋮ 핸들로 항목·카테고리를 끌어 옮길 수 있어요. 이름·삭제는 카테고리 옆 버튼으로.</div>`;
 }
 
 function renderPackItem(item, nights) {
   const isLocal = item.localBuy;
   const isDone  = item.checked;
 
-  // qty badge
+  // qty badge (perDay 우선 → qtyF)
   let qtyHtml = '';
-  if (item.qtyF && nights > 0) {
-    const q = calcQty(item.qtyF, nights);
-    qtyHtml = `<span class="itm-qty">${nights}박 기준 ×${q}</span>`;
+  const q = itemQty(item, nights);
+  if (q != null) {
+    if (item.perDayEvery && item.perDayCount) {
+      const lbl = item.perDayEvery === 1 ? `하루 ${item.perDayCount}개` : `${item.perDayEvery}일에 ${item.perDayCount}개`;
+      qtyHtml = `<span class="itm-qty">${lbl} → ×${q}</span>`;
+    } else {
+      qtyHtml = `<span class="itm-qty">${nights}박 기준 ×${q}</span>`;
+    }
   }
 
   // tag
@@ -518,9 +694,28 @@ function renderPackItem(item, nights) {
   // decant
   let decantBtn = '', decantPanel = '';
   if (item.hasMl) {
-    const hasVal = item.ml && item.ml > 0;
-    const needed = hasVal ? calcDecant(item.ml, item.cml||50) : null;
+    const pumpMl = calcPumpMl(item.pumpsPerDay, item.mlPerPump, nights);
+    const effectiveMl = item.ml || pumpMl;
+    const hasVal = effectiveMl && effectiveMl > 0;
+    const needed = hasVal ? calcDecant(effectiveMl, item.cml||50) : null;
     decantBtn = `<button class="btn-decant${hasVal?' has-val':''}" onclick="APP.toggleDecant('${item.id}')">소분</button>`;
+    const hasPump = item.pumpsPerDay && item.mlPerPump;
+    const pumpRow = `
+        <div class="dp-divider"></div>
+        <div class="dp-section-label">펌프 기반 자동 계산${hasPump?'':' (선택)'}</div>
+        <div class="dp-group">
+          <label>하루 펌프</label>
+          <input type="number" id="ppd-${item.id}" min="0" step="0.5" value="${item.pumpsPerDay||''}"
+            onchange="APP.savePumpField('${item.id}')">
+        </div>
+        <div class="dp-group">
+          <label>1펌프 ml</label>
+          <input type="number" id="mlp-${item.id}" min="0" step="0.05" value="${item.mlPerPump||''}"
+            onchange="APP.savePumpField('${item.id}')">
+        </div>
+        ${hasPump ? `<div class="dp-result calc">≈ ${pumpMl} ml 필요 (${nights+1}일)</div>` : ''}
+        ${(hasPump && !item.ml) ? `<button class="dp-apply" onclick="APP.applyPumpMl('${item.id}')">필요량 적용</button>` : ''}
+      `;
     decantPanel = `
       <div class="decant-panel" id="dp-${item.id}">
         <div class="dp-group">
@@ -539,12 +734,14 @@ function renderPackItem(item, nights) {
           </select>
         </div>
         ${needed ? `<div class="dp-result" id="dpr-${item.id}">용기 ${needed}개 필요</div>` : `<div class="dp-result" id="dpr-${item.id}" style="display:none"></div>`}
+        ${pumpRow}
       </div>`;
   }
 
   return `
-    <div class="itm ${isDone&&!isLocal?'done':''} ${isLocal?'is-local':''}" id="itm-${item.id}">
+    <div class="itm ${isDone&&!isLocal?'done':''} ${isLocal?'is-local':''}" id="itm-${item.id}" data-id="${item.id}">
       <div class="itm-row">
+        <span class="drag-handle" title="이동">⋮⋮</span>
         <input type="checkbox" class="itm-cb" id="cb-${item.id}"
           ${isDone?'checked':''} ${isLocal?'disabled':''}
           onchange="APP.toggleCheck('${item.id}',this.checked)">
@@ -554,41 +751,56 @@ function renderPackItem(item, nights) {
         </div>
         ${decantBtn}
         <button class="btn-local${isLocal?' on':''}" onclick="APP.toggleLocal('${item.id}')" title="현지구매 전환">🛒</button>
+        <button class="btn-itm-edit" onclick="APP.editItem('${item.id}')">수정</button>
+        <button class="btn-itm-del" onclick="APP.deleteItem('${item.id}')">삭제</button>
       </div>
       ${decantPanel}
     </div>`;
 }
 
-function renderSimple(items, section) {
-  const si = items.filter(i => i.section === section);
-  if (!si.length) return `<div style="padding:2rem;text-align:center;color:var(--text-muted)">항목이 없어요</div>`;
-  const cats = [...new Set(si.map(i=>i.cat||'기타'))];
-  return cats.map(cat => {
-    const ci = si.filter(i=>(i.cat||'기타')===cat);
-    return `<div class="sec"><div class="sec-title">${esc(cat)}</div>
-      ${ci.map(item=>`
-        <div class="itm ${item.checked?'done':''}" id="itm-${item.id}">
-          <div class="itm-row">
-            <input type="checkbox" class="itm-cb" id="cb-${item.id}"
-              ${item.checked?'checked':''}
-              onchange="APP.toggleCheck('${item.id}',this.checked)">
-            <div class="itm-main">
-              <label class="itm-label" for="cb-${item.id}">${esc(item.label)}</label>
-              ${item.ti?`<span class="tag tag-${item.ti}">${esc(item.tt||'')}</span>`:''}
-            </div>
-          </div>
-        </div>`).join('')}
+function renderSimpleItem(item) {
+  return `
+    <div class="itm ${item.checked?'done':''}" id="itm-${item.id}" data-id="${item.id}">
+      <div class="itm-row">
+        <span class="drag-handle" title="이동">⋮⋮</span>
+        <input type="checkbox" class="itm-cb" id="cb-${item.id}"
+          ${item.checked?'checked':''}
+          onchange="APP.toggleCheck('${item.id}',this.checked)">
+        <div class="itm-main">
+          <label class="itm-label" for="cb-${item.id}">${esc(item.label)}</label>
+          ${item.ti?`<span class="tag tag-${item.ti}">${esc(item.tt||'')}</span>`:''}
+        </div>
+        <button class="btn-itm-edit" onclick="APP.editItem('${item.id}')">수정</button>
+        <button class="btn-itm-del" onclick="APP.deleteItem('${item.id}')">삭제</button>
+      </div>
     </div>`;
-  }).join('');
 }
 
-function renderLocal(items) {
+function renderSimple(items, meta, section) {
+  const si = items.filter(i => i.section === section);
+  let html = renderEditHint();
+  if (!si.length && !editMode) {
+    html += `<div style="padding:2rem;text-align:center;color:var(--text-muted)">항목이 없어요</div>`;
+    return html;
+  }
+  const cats = getCatOrder(items, section, meta);
+  html += `<div id="cat-list" data-section="${esc(section)}">`;
+  cats.forEach(cat => {
+    html += renderCategory(si, cat, 0, section);
+  });
+  html += `</div>`;
+  html += `<button class="add-cat-btn" data-section="${esc(section)}">＋ 새 카테고리</button>`;
+  return html;
+}
+
+function renderLocal(items, meta) {
   const fromPack  = items.filter(i => i.section==='pack' && i.localBuy);
   const localOnly = items.filter(i => i.section==='local');
 
   let html = `<div class="notice notice-info">현지에서 구매 예정인 항목이에요. 따로 챙기지 않아도 돼요.</div>`;
+  html += renderEditHint();
 
-  if (fromPack.length) {
+  if (fromPack.length && !editMode) {
     html += `<div class="sec"><div class="sec-title">짐 목록에서 이동됨</div>`;
     fromPack.forEach(item => {
       html += `<div class="local-row">
@@ -600,22 +812,113 @@ function renderLocal(items) {
     html += `</div>`;
   }
 
-  if (localOnly.length) {
-    html += `<div class="sec"><div class="sec-title">기본 현지 구매 목록</div>`;
-    localOnly.forEach(item => {
-      html += `<div class="local-row">
-        <span style="color:var(--text-muted)">·</span>
-        <span class="local-label">${esc(item.label)}</span>
-        ${item.ti?`<span class="tag tag-${item.ti}">${esc(item.tt||'')}</span>`:''}
-      </div>`;
-    });
-    html += `</div>`;
+  // 편집 모드: local 섹션 항목들도 카테고리/드래그 가능
+  const cats = getCatOrder(items, 'local', meta);
+  if (cats.length || editMode) {
+    if (!editMode) html += `<div class="sec"><div class="sec-title">기본 현지 구매 목록</div>`;
+    if (editMode) {
+      html += `<div id="cat-list" data-section="local">`;
+      cats.forEach(cat => { html += renderCategory(localOnly, cat, 0, 'local'); });
+      html += `</div>`;
+      html += `<button class="add-cat-btn" data-section="local">＋ 새 카테고리</button>`;
+    } else {
+      localOnly.forEach(item => {
+        html += `<div class="local-row">
+          <span style="color:var(--text-muted)">·</span>
+          <span class="local-label">${esc(item.label)}</span>
+          ${item.ti?`<span class="tag tag-${item.ti}">${esc(item.tt||'')}</span>`:''}
+        </div>`;
+      });
+      html += `</div>`;
+    }
   }
 
-  if (!fromPack.length && !localOnly.length) {
+  if (!fromPack.length && !localOnly.length && !editMode) {
     html += `<div style="padding:2rem;text-align:center;color:var(--text-muted)">항목이 없어요</div>`;
   }
   return html;
+}
+
+// ── SORTABLE INIT ──────────────────────
+function initSortables() {
+  if (!window.Sortable) return;
+  const opts = {
+    animation: 150,
+    handle: '.drag-handle',
+    ghostClass: 'sortable-ghost',
+    chosenClass: 'sortable-chosen',
+    forceFallback: true,
+    fallbackTolerance: 4,
+    delay: 80,
+    delayOnTouchOnly: true,
+    onEnd: onItemSortEnd
+  };
+
+  // 항목 드래그: 같은 섹션 내 카테고리들 끼리 group
+  document.querySelectorAll('.cat-items').forEach(el => {
+    const section = el.dataset.section;
+    _sortables.push(new Sortable(el, {
+      ...opts,
+      group: 'items-' + section
+    }));
+  });
+
+  // 카테고리 드래그
+  const catList = document.getElementById('cat-list');
+  if (catList) {
+    _sortables.push(new Sortable(catList, {
+      animation: 150,
+      handle: '.cat-handle',
+      ghostClass: 'sortable-ghost',
+      forceFallback: true,
+      fallbackTolerance: 4,
+      delay: 80,
+      delayOnTouchOnly: true,
+      onEnd: onCatSortEnd
+    }));
+  }
+}
+
+async function onItemSortEnd(evt) {
+  const fromCat = evt.from.dataset.cat;
+  const toCat   = evt.to.dataset.cat;
+  const section = evt.to.dataset.section;
+  if (!tripId) return;
+
+  const updates = {};
+
+  // 이동된 항목의 카테고리 변경
+  const movedId = evt.item.dataset.id;
+  if (movedId && fromCat !== toCat) {
+    updates[`${DB_ROOT}/${tripId}/items/${movedId}/cat`] = toCat;
+  }
+
+  // 변경된 두 카테고리의 모든 항목 ord를 다시 계산
+  const affectedCats = new Set([fromCat, toCat]);
+  affectedCats.forEach(cat => {
+    const container = document.querySelector(`.cat-items[data-cat="${CSS.escape(cat)}"][data-section="${CSS.escape(section)}"]`);
+    if (!container) return;
+    [...container.querySelectorAll('.itm[data-id]')].forEach((node, idx) => {
+      const id = node.dataset.id;
+      updates[`${DB_ROOT}/${tripId}/items/${id}/ord`] = idx;
+    });
+  });
+
+  if (Object.keys(updates).length) {
+    showSync();
+    await update(ref(db, '/'), updates);
+  }
+}
+
+async function onCatSortEnd(evt) {
+  const section = evt.to.dataset.section;
+  if (!tripId) return;
+  const order = [...document.querySelectorAll(`#cat-list[data-section="${CSS.escape(section)}"] .sec[data-cat]`)]
+    .map(s => s.dataset.cat);
+  const meta = db_data[tripId]?.meta || {};
+  const catOrder = { ...(meta.catOrder || {}) };
+  catOrder[section] = order;
+  await dbUpd(`${DB_ROOT}/${tripId}/meta`, { catOrder });
 }
 
 // ── GLOBAL ACTIONS ─────────────────────
@@ -623,11 +926,17 @@ const APP = {
   openTrip(id) {
     tripId = id;
     curTab = 'pack';
+    editMode = false;
     const m = db_data[id]?.meta || {};
     document.getElementById('hd-name').textContent    = m.name  || '';
     document.getElementById('hd-nights').textContent  = m.nights ? nightsLabel(m.nights) : '';
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.tab==='pack'));
     showScreen('s-trip');
+    renderChecklist();
+  },
+
+  toggleEditMode() {
+    editMode = !editMode;
     renderChecklist();
   },
 
@@ -649,16 +958,103 @@ const APP = {
     const ml  = parseFloat(mlVal) || null;
     const cml = parseInt(cmlVal) || 50;
     await dbUpd(`${DB_ROOT}/${tripId}/items/${itemId}`, { ml, cml });
-    // Update result UI immediately
-    const needed = ml ? calcDecant(ml, cml) : null;
+    const item   = { ...(db_data[tripId]?.items?.[itemId]||{}), ml, cml };
+    const nights = db_data[tripId]?.meta?.nights || 0;
+    const pumpMl = calcPumpMl(item.pumpsPerDay, item.mlPerPump, nights);
+    const eff    = ml || pumpMl;
+    const needed = eff ? calcDecant(eff, cml) : null;
     const resEl  = document.getElementById('dpr-'+itemId);
     if (resEl) {
       resEl.textContent   = needed ? `용기 ${needed}개 필요` : '';
       resEl.style.display = needed ? '' : 'none';
     }
-    // Update btn style
     const btn = document.querySelector(`#itm-${itemId} .btn-decant`);
-    if (btn) btn.classList.toggle('has-val', !!ml);
+    if (btn) btn.classList.toggle('has-val', !!eff);
+  },
+
+  async savePump(itemId, ppdVal, mlpVal) {
+    const pumpsPerDay = parseFloat(ppdVal) || null;
+    const mlPerPump   = parseFloat(mlpVal) || null;
+    await dbUpd(`${DB_ROOT}/${tripId}/items/${itemId}`, { pumpsPerDay, mlPerPump });
+  },
+
+  async savePumpField(itemId) {
+    const ppd = document.getElementById('ppd-'+itemId)?.value;
+    const mlp = document.getElementById('mlp-'+itemId)?.value;
+    return APP.savePump(itemId, ppd, mlp);
+  },
+
+  async applyPumpMl(itemId) {
+    const item   = db_data[tripId]?.items?.[itemId];
+    const nights = db_data[tripId]?.meta?.nights || 0;
+    if (!item) return;
+    const ml = calcPumpMl(item.pumpsPerDay, item.mlPerPump, nights);
+    if (!ml) return;
+    await dbUpd(`${DB_ROOT}/${tripId}/items/${itemId}`, { ml });
+  },
+
+  editItem(itemId) {
+    openItemModal(itemId);
+  },
+
+  async deleteItem(itemId) {
+    const item = db_data[tripId]?.items?.[itemId];
+    if (!item) return;
+    if (!confirm(`"${item.label}" 항목을 삭제할까요?`)) return;
+    await dbDel(`${DB_ROOT}/${tripId}/items/${itemId}`);
+  },
+
+  async addCategory(section) {
+    const name = prompt('새 카테고리 이름');
+    if (!name) return;
+    const trimmed = name.trim();
+    if (!trimmed) return;
+    const meta = db_data[tripId]?.meta || {};
+    const catOrder = { ...(meta.catOrder || {}) };
+    const cur = catOrder[section] || [];
+    if (cur.includes(trimmed)) { alert('이미 같은 이름의 카테고리가 있어요'); return; }
+    catOrder[section] = [...cur, trimmed];
+    await dbUpd(`${DB_ROOT}/${tripId}/meta`, { catOrder });
+  },
+
+  async renameCategory(section, oldName) {
+    const newName = prompt('카테고리 이름 변경', oldName);
+    if (!newName) return;
+    const trimmed = newName.trim();
+    if (!trimmed || trimmed === oldName) return;
+    const items = db_data[tripId]?.items || {};
+    const updates = {};
+    Object.entries(items).forEach(([iid, it]) => {
+      if (it.section === section && (it.cat||'기타') === oldName) {
+        updates[`${DB_ROOT}/${tripId}/items/${iid}/cat`] = trimmed;
+      }
+    });
+    const meta = db_data[tripId]?.meta || {};
+    const catOrder = { ...(meta.catOrder || {}) };
+    const cur = catOrder[section] || [];
+    if (cur.length) catOrder[section] = cur.map(c => c === oldName ? trimmed : c);
+    updates[`${DB_ROOT}/${tripId}/meta/catOrder`] = catOrder;
+    showSync();
+    await update(ref(db, '/'), updates);
+  },
+
+  async deleteCategory(section, cat) {
+    const items = db_data[tripId]?.items || {};
+    const inCat = Object.entries(items).filter(([_,it]) => it.section === section && (it.cat||'기타') === cat);
+    if (inCat.length) {
+      if (!confirm(`"${cat}" 카테고리의 항목 ${inCat.length}개도 같이 삭제할까요?`)) return;
+    } else {
+      if (!confirm(`"${cat}" 카테고리를 삭제할까요?`)) return;
+    }
+    const updates = {};
+    inCat.forEach(([iid]) => { updates[`${DB_ROOT}/${tripId}/items/${iid}`] = null; });
+    const meta = db_data[tripId]?.meta || {};
+    const catOrder = { ...(meta.catOrder || {}) };
+    const cur = catOrder[section] || [];
+    catOrder[section] = cur.filter(c => c !== cat);
+    updates[`${DB_ROOT}/${tripId}/meta/catOrder`] = catOrder;
+    showSync();
+    await update(ref(db, '/'), updates);
   }
 };
 window.APP = APP;
@@ -739,17 +1135,79 @@ async function deleteTripHandler() {
   renderHome();
 }
 
-// ── ADD ITEM MODAL ─────────────────────
-function openAddModal() {
-  document.getElementById('inp-ilabel').value = '';
-  document.getElementById('inp-icat').value   = '';
-  document.getElementById('inp-itab').value   = curTab==='local'?'local':curTab==='todo'?'todo':curTab==='recommend'?'recommend':'pack';
-  document.getElementById('inp-iml').checked  = false;
+// ── ADD/EDIT ITEM MODAL ────────────────
+function openItemModal(itemId = null) {
+  editItemId = itemId;
+  const isEdit = !!itemId;
+  const item   = isEdit ? (db_data[tripId]?.items?.[itemId] || {}) : {};
+
+  document.getElementById('m-item-title').textContent = isEdit ? '항목 수정' : '항목 추가';
+  document.getElementById('btn-save-item').textContent = isEdit ? '저장' : '추가';
+  document.getElementById('btn-del-item').style.display = isEdit ? 'block' : 'none';
+
+  document.getElementById('inp-ilabel').value = item.label || '';
+  document.getElementById('inp-icat').value   = item.cat   || '';
+  document.getElementById('inp-itab').value   = item.section || (curTab==='local'?'local':curTab==='todo'?'todo':curTab==='recommend'?'recommend':'pack');
+
+  // 카테고리 자동완성 채우기
+  const dl = document.getElementById('cat-suggest');
+  const cats = new Set();
+  Object.values(db_data[tripId]?.items||{}).forEach(i => { if (i.cat) cats.add(i.cat); });
+  dl.innerHTML = [...cats].map(c => `<option value="${esc(c)}">`).join('');
+
+  // 정기 사용량
+  const pdOn = !!(item.perDayEvery && item.perDayCount);
+  document.getElementById('inp-ipd-on').checked = pdOn;
+  document.getElementById('inp-ipd-box').style.display = pdOn ? 'flex' : 'none';
+  document.getElementById('inp-ipd-every').value = item.perDayEvery || 1;
+  document.getElementById('inp-ipd-count').value = item.perDayCount || 1;
+  updatePdPreview();
+
+  // 펌프 / 소분
+  document.getElementById('inp-iml').checked = !!item.hasMl;
+  document.getElementById('inp-ipump-box').style.display = item.hasMl ? 'flex' : 'none';
+  document.getElementById('inp-ipump-pd').value  = item.pumpsPerDay || '';
+  document.getElementById('inp-ipump-mlp').value = item.mlPerPump   || '';
+  updatePumpPreview();
+
   document.getElementById('m-item').style.display = 'flex';
 }
 
-function closeAddModal() {
+function closeItemModal() {
   document.getElementById('m-item').style.display = 'none';
+  editItemId = null;
+}
+
+function updatePdPreview() {
+  const on    = document.getElementById('inp-ipd-on').checked;
+  const every = parseInt(document.getElementById('inp-ipd-every').value) || 0;
+  const count = parseInt(document.getElementById('inp-ipd-count').value) || 0;
+  const nights= db_data[tripId]?.meta?.nights || 0;
+  const el    = document.getElementById('inp-ipd-preview');
+  if (on && every > 0 && count > 0) {
+    const q = calcQtyPeriodic(every, count, nights);
+    el.textContent = nights > 0 ? `${nights}박 ${nights+1}일 → 총 ${q}개 필요` : `1일 기준 ${count}개 (출발일 미정)`;
+    el.style.display = 'block';
+  } else {
+    el.style.display = 'none';
+  }
+}
+
+function updatePumpPreview() {
+  const on  = document.getElementById('inp-iml').checked;
+  const ppd = parseFloat(document.getElementById('inp-ipump-pd').value) || 0;
+  const mlp = parseFloat(document.getElementById('inp-ipump-mlp').value) || 0;
+  const nights = db_data[tripId]?.meta?.nights || 0;
+  const el  = document.getElementById('inp-ipump-preview');
+  if (on && ppd > 0 && mlp > 0) {
+    const days   = Math.max(1, nights + 1);
+    const totalP = +(ppd * days).toFixed(1);
+    const totalM = +(ppd * mlp * days).toFixed(2);
+    el.textContent = `${days}일 × ${ppd}펌프 = 총 ${totalP}펌프 = ${totalM}ml`;
+    el.style.display = 'block';
+  } else {
+    el.style.display = 'none';
+  }
 }
 
 async function saveItemHandler() {
@@ -757,31 +1215,78 @@ async function saveItemHandler() {
   const cat    = document.getElementById('inp-icat').value.trim() || '기타';
   const section= document.getElementById('inp-itab').value;
   const hasMl  = document.getElementById('inp-iml').checked;
+  const pdOn   = document.getElementById('inp-ipd-on').checked;
+  const pdEvery= pdOn ? (parseInt(document.getElementById('inp-ipd-every').value) || null) : null;
+  const pdCount= pdOn ? (parseInt(document.getElementById('inp-ipd-count').value) || null) : null;
+  const ppd    = hasMl ? (parseFloat(document.getElementById('inp-ipump-pd').value) || null) : null;
+  const mlp    = hasMl ? (parseFloat(document.getElementById('inp-ipump-mlp').value) || null) : null;
   if (!label) { alert('항목 이름을 입력해주세요'); return; }
+
+  if (editItemId) {
+    const cur = db_data[tripId]?.items?.[editItemId] || {};
+    await dbUpd(`${DB_ROOT}/${tripId}/items/${editItemId}`, {
+      label, cat, section,
+      perDayEvery: pdEvery, perDayCount: pdCount,
+      hasMl,
+      pumpsPerDay: ppd, mlPerPump: mlp,
+      // 소분 끄면 ml/cml/펌프 초기화
+      ...(hasMl ? {} : { ml:null, pumpsPerDay:null, mlPerPump:null })
+    });
+    closeItemModal();
+    return;
+  }
+
   const existCount = Object.keys(db_data[tripId]?.items||{}).length;
   const id = 'i' + Date.now();
   await dbSet(`${DB_ROOT}/${tripId}/items/${id}`, {
     id, label, cat, sub:null, section,
     checked:false, localBuy:false,
     qty:null, qtyF:null,
+    perDayEvery: pdEvery, perDayCount: pdCount,
     hasMl, ml:null, cml:50,
+    pumpsPerDay: ppd, mlPerPump: mlp,
     ti:null, tt:null, ord: existCount
   });
-  closeAddModal();
+  closeItemModal();
+}
+
+async function deleteItemFromModal() {
+  if (!editItemId) return;
+  const item = db_data[tripId]?.items?.[editItemId];
+  if (!item) return;
+  if (!confirm(`"${item.label}" 항목을 삭제할까요?`)) return;
+  await dbDel(`${DB_ROOT}/${tripId}/items/${editItemId}`);
+  closeItemModal();
 }
 
 // ── EVENTS ─────────────────────────────
-document.getElementById('btn-new').onclick      = () => openTripModal(null);
-document.getElementById('btn-edit').onclick     = () => openTripModal(tripId);
-document.getElementById('btn-back').onclick     = () => { tripId=null; showScreen('s-home'); renderHome(); };
+document.getElementById('btn-new').onclick       = () => openTripModal(null);
+document.getElementById('btn-edit').onclick      = () => openTripModal(tripId);
+document.getElementById('btn-edit-mode').onclick = () => APP.toggleEditMode();
+document.getElementById('btn-back').onclick      = () => { tripId=null; editMode=false; destroySortables(); showScreen('s-home'); renderHome(); };
 document.getElementById('btn-save-trip').onclick = saveTripHandler;
 document.getElementById('btn-del-trip').onclick  = deleteTripHandler;
 document.getElementById('m-trip-close').onclick  = closeTripModal;
-document.getElementById('btn-add-item').onclick  = openAddModal;
+document.getElementById('btn-add-item').onclick  = () => openItemModal(null);
 document.getElementById('btn-save-item').onclick = saveItemHandler;
-document.getElementById('m-item-close').onclick  = closeAddModal;
+document.getElementById('btn-del-item').onclick  = deleteItemFromModal;
+document.getElementById('m-item-close').onclick  = closeItemModal;
 document.getElementById('inp-start').addEventListener('change', updateNightsChip);
 document.getElementById('inp-end').addEventListener('change', updateNightsChip);
+
+// 모달 내 정기/펌프 옵션 토글 + 미리보기
+document.getElementById('inp-ipd-on').addEventListener('change', e => {
+  document.getElementById('inp-ipd-box').style.display = e.target.checked ? 'flex' : 'none';
+  updatePdPreview();
+});
+document.getElementById('inp-ipd-every').addEventListener('input', updatePdPreview);
+document.getElementById('inp-ipd-count').addEventListener('input', updatePdPreview);
+document.getElementById('inp-iml').addEventListener('change', e => {
+  document.getElementById('inp-ipump-box').style.display = e.target.checked ? 'flex' : 'none';
+  updatePumpPreview();
+});
+document.getElementById('inp-ipump-pd').addEventListener('input', updatePumpPreview);
+document.getElementById('inp-ipump-mlp').addEventListener('input', updatePumpPreview);
 
 document.querySelectorAll('.tab').forEach(t => {
   t.onclick = function() {
@@ -790,6 +1295,12 @@ document.querySelectorAll('.tab').forEach(t => {
     curTab = this.dataset.tab;
     renderChecklist();
   };
+});
+
+// 동적으로 생성된 "+ 새 카테고리" 버튼 처리
+document.getElementById('cl-content').addEventListener('click', e => {
+  const btn = e.target.closest('.add-cat-btn');
+  if (btn) APP.addCategory(btn.dataset.section);
 });
 
 document.querySelectorAll('.modal-overlay').forEach(o => {
