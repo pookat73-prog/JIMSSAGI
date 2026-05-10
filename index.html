@@ -166,9 +166,19 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .edit-mode .cat-items{min-height:14px;padding:2px 0 4px}
 .edit-mode .sec{background:var(--bg);border-color:var(--border-soft)}
 .edit-mode .sec-title-row{padding-bottom:8px}
-.edit-mode .itm-period{display:inline-flex;align-items:center;gap:3px;font-size:10px;background:var(--ok-bg);color:var(--ok-text);padding:2px 7px;border-radius:9px;font-weight:500;cursor:pointer;flex-shrink:0}
-.edit-mode .itm-period.empty{background:var(--bg);color:var(--text-muted);border:1px dashed var(--border)}
-.itm-period{display:none}
+.edit-mode .itm-period{padding:2px 7px;gap:3px;background:var(--ok-bg);color:var(--ok-text)}
+.edit-mode .itm-period.empty{background:var(--bg);color:var(--text-muted);border:1px dashed var(--border);opacity:1}
+.itm-period{display:inline-flex;align-items:center;gap:2px;font-size:10px;padding:1px 6px;border-radius:9px;font-weight:500;cursor:pointer;flex-shrink:0;line-height:1.5;background:var(--ok-bg);color:var(--ok-text)}
+.itm-period.empty{background:transparent;color:var(--text-muted);border:1px dashed var(--border);font-weight:400;opacity:.6}
+.itm-period.empty:active{opacity:1;background:var(--bg)}
+
+/* ── 정기 사용량 인라인 픽커 ── */
+.period-picker{position:absolute;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:6px;display:flex;gap:4px;flex-wrap:wrap;z-index:50;box-shadow:0 6px 18px rgba(0,0,0,.14);max-width:240px}
+.period-picker button{font-family:inherit;font-size:11px;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:5px 9px;cursor:pointer;line-height:1.3;color:var(--text-primary)}
+.period-picker button:active{background:var(--accent-light);border-color:var(--accent-mid);color:var(--accent)}
+.period-picker button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
+.period-picker button.off{color:var(--danger);border-color:var(--danger)}
+.period-picker button.more{color:var(--accent);border-color:var(--accent-mid);background:var(--accent-light)}
 
 /* ── CATEGORIZE-ONLY MODE (가장 단순한 분류 전용 뷰) ── */
 .categorize-mode .btn-itm-edit,
@@ -795,8 +805,10 @@ function renderCategorize(items, section, meta) {
   const cats = getCatOrder(items, section, meta).filter(c => c !== FLOOR_CAT);
   const collapsed = _floorCollapsed;
 
+  const allExpanded = cats.length > 0 && cats.every(c => _expandedPouches.has(section + ':' + c));
   let html = `<div class="cat-toolbar">
     <button class="btn-floor-toggle" onclick="APP.resetToFloor()">↺ 전부 바닥으로</button>
+    <button class="btn-floor-toggle" onclick="APP.toggleAllPouches()">${allExpanded ? '📁 주머니 접기' : '📂 주머니 펴기'}</button>
     ${collapsed
       ? `<button class="btn-floor-toggle" onclick="APP.toggleFloor()">🪣 바닥 (${floorItems.length}) 펴기</button>`
       : `<button class="btn-floor-toggle" onclick="APP.toggleFloor()">🪣 바닥 접기</button>`}
@@ -863,15 +875,15 @@ function renderPackItem(item, nights) {
     }
   }
 
-  // 편집 모드용 정기 설정 칩 (현재 설정 보여주거나 비어있음 표시)
+  // 정기 설정 칩 — 설정값 표시, 탭 시 인라인 픽커
   let periodChip = '';
   if (item.perDayEvery && item.perDayCount) {
     const lbl = item.perDayEvery === 1
       ? `하루 ${item.perDayCount}개`
       : `${item.perDayEvery}일에 ${item.perDayCount}개`;
-    periodChip = `<span class="itm-period" onclick="APP.editItem('${item.id}')">🔁 ${lbl}</span>`;
+    periodChip = `<span class="itm-period" onclick="event.preventDefault();event.stopPropagation();APP.openPeriodPicker('${item.id}', this)">🔁 ${lbl}</span>`;
   } else {
-    periodChip = `<span class="itm-period empty" onclick="APP.editItem('${item.id}')">🔁 정기?</span>`;
+    periodChip = `<span class="itm-period empty" onclick="event.preventDefault();event.stopPropagation();APP.openPeriodPicker('${item.id}', this)">🔁 정기?</span>`;
   }
 
   // tag
@@ -1179,6 +1191,75 @@ const APP = {
   toggleFloor() {
     _floorCollapsed = !_floorCollapsed;
     renderChecklist();
+  },
+
+  toggleAllPouches() {
+    const allItems = Object.values(db_data[tripId]?.items || {});
+    const cats = getCatOrder(allItems, curTab, db_data[tripId]?.meta).filter(c => c !== FLOOR_CAT);
+    const allExpanded = cats.length > 0 && cats.every(c => _expandedPouches.has(curTab + ':' + c));
+    if (allExpanded) {
+      cats.forEach(c => _expandedPouches.delete(curTab + ':' + c));
+    } else {
+      cats.forEach(c => _expandedPouches.add(curTab + ':' + c));
+    }
+    renderChecklist();
+  },
+
+  openPeriodPicker(itemId, anchor) {
+    document.querySelectorAll('.period-picker').forEach(p => {
+      if (p._closeFn) document.removeEventListener('click', p._closeFn);
+      p.remove();
+    });
+    const item = db_data[tripId]?.items?.[itemId];
+    if (!item) return;
+    const isSet = item.perDayEvery && item.perDayCount;
+    const presets = [
+      {e:1, c:1, l:'매일 1개'},
+      {e:2, c:1, l:'2일에 1개'},
+      {e:3, c:1, l:'3일에 1개'},
+      {e:4, c:1, l:'4일에 1개'},
+      {e:1, c:2, l:'매일 2개'}
+    ];
+    const isCurrent = (e,c) => isSet && +item.perDayEvery===e && +item.perDayCount===c;
+    let html = presets.map(p =>
+      `<button class="${isCurrent(p.e,p.c)?'on':''}" onclick="APP.setPeriod('${itemId}',${p.e},${p.c})">${p.l}</button>`
+    ).join('');
+    if (isSet) html += `<button class="off" onclick="APP.setPeriod('${itemId}',null,null)">해제</button>`;
+    html += `<button class="more" onclick="APP._closePeriodPicker();APP.editItem('${itemId}')">직접…</button>`;
+
+    const picker = document.createElement('div');
+    picker.className = 'period-picker';
+    picker.innerHTML = html;
+    document.body.appendChild(picker);
+
+    const r = anchor.getBoundingClientRect();
+    const pw = picker.offsetWidth;
+    picker.style.top  = (r.bottom + window.scrollY + 4) + 'px';
+    picker.style.left = Math.max(8, Math.min(r.left + window.scrollX, window.innerWidth - pw - 8)) + 'px';
+
+    setTimeout(() => {
+      const close = e => {
+        if (!picker.contains(e.target) && !anchor.contains(e.target)) {
+          APP._closePeriodPicker();
+        }
+      };
+      document.addEventListener('click', close);
+      picker._closeFn = close;
+    }, 0);
+  },
+
+  _closePeriodPicker() {
+    document.querySelectorAll('.period-picker').forEach(p => {
+      if (p._closeFn) document.removeEventListener('click', p._closeFn);
+      p.remove();
+    });
+  },
+
+  async setPeriod(itemId, every, count) {
+    APP._closePeriodPicker();
+    await dbUpd(`${DB_ROOT}/${tripId}/items/${itemId}`, {
+      perDayEvery: every, perDayCount: count
+    });
   },
 
   async renameItem(itemId) {
