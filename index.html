@@ -118,6 +118,9 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .local-row:last-child{border-bottom:none}
 .local-row .local-label{flex:1;font-size:14px}
 .revert-btn{font-family:'Noto Sans KR',sans-serif;font-size:11px;background:none;border:1px solid var(--local-text);color:var(--local-text);border-radius:6px;padding:3px 9px;cursor:pointer}
+.btn-local-del{font-family:inherit;background:none;border:none;font-size:16px;color:var(--text-muted);cursor:pointer;padding:1px 6px;border-radius:4px;line-height:1;flex-shrink:0;opacity:.5}
+.btn-local-del:active{opacity:1;background:var(--danger);color:#fff}
+.local-row .btn-inline-edit{opacity:.55}
 
 /* ── FAB ── */
 .fab{position:fixed;bottom:1.4rem;right:1.3rem;width:50px;height:50px;border-radius:50%;background:var(--accent);color:#fff;font-size:26px;border:none;cursor:pointer;box-shadow:0 3px 12px rgba(107,92,231,.4);display:flex;align-items:center;justify-content:center;z-index:20;line-height:1}
@@ -1111,6 +1114,7 @@ function renderLocal(items, meta) {
       html += `<div class="local-row">
         <span>🛒</span>
         <span class="local-label">${esc(item.label)}</span>
+        <button class="btn-inline-edit" onclick="APP.editItem('${item.id}')" title="수정">✎</button>
         <button class="revert-btn" onclick="APP.toggleLocal('${item.id}')">되돌리기</button>
       </div>`;
     });
@@ -1132,6 +1136,8 @@ function renderLocal(items, meta) {
           <span style="color:var(--text-muted)">·</span>
           <span class="local-label">${esc(item.label)}</span>
           ${item.ti?`<span class="tag tag-${item.ti}">${esc(item.tt||'')}</span>`:''}
+          <button class="btn-inline-edit" onclick="APP.editItem('${item.id}')" title="수정">✎</button>
+          <button class="btn-local-del" onclick="APP.deleteItem('${item.id}')" title="삭제">×</button>
         </div>`;
       });
       html += `</div>`;
