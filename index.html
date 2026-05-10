@@ -1322,8 +1322,10 @@ const mani = JSON.stringify({
   display:'standalone',
   background_color:'#f7f6f2', theme_color:'#6b5ce7',
   icons:[
-    {src:ICON_ANY,  sizes:'any', type:'image/svg+xml', purpose:'any'},
-    {src:ICON_MASK, sizes:'any', type:'image/svg+xml', purpose:'maskable'}
+    {src:ICON_ANY,  sizes:'192x192', type:'image/svg+xml', purpose:'any'},
+    {src:ICON_ANY,  sizes:'512x512', type:'image/svg+xml', purpose:'any'},
+    {src:ICON_MASK, sizes:'192x192', type:'image/svg+xml', purpose:'maskable'},
+    {src:ICON_MASK, sizes:'512x512', type:'image/svg+xml', purpose:'maskable'}
   ]
 });
 const mLink = document.createElement('link');
@@ -1336,6 +1338,15 @@ const apl = document.createElement('link');
 apl.rel = 'apple-touch-icon';
 apl.href = ICON_MASK;
 document.head.appendChild(apl);
+
+// ── SERVICE WORKER (PWA installability) ──
+if ('serviceWorker' in navigator) {
+  window.addEventListener('load', () => {
+    navigator.serviceWorker.register('./sw.js').catch(err => {
+      console.warn('SW register failed:', err);
+    });
+  });
+}
 
 // ── FIREBASE LISTENER + INIT ────────────
 onValue(ref(db, DB_ROOT), snap => {
