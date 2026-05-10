@@ -1,0 +1,826 @@
+<!DOCTYPE html>
+<html lang="ko">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>짐싸기</title>
+<meta name="theme-color" content="#6b5ce7">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-title" content="짐싸기">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<style>
+@import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500&display=swap');
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#f7f6f2;--surface:#fff;--border:#e5e3dc;--border-soft:#eeece6;
+  --text-primary:#1a1917;--text-secondary:#6b6860;--text-muted:#a8a59e;
+  --accent:#6b5ce7;--accent-light:#ede9ff;--accent-mid:#c4b8f8;
+  --warn-bg:#fff8ed;--warn-text:#9a6800;
+  --info-bg:#edf4ff;--info-text:#1a5fb4;
+  --ok-bg:#edfce8;--ok-text:#2a7a1e;
+  --local-bg:#fff0f6;--local-text:#9b3070;
+  --danger:#e53e3e;
+}
+body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text-primary);min-height:100vh;font-size:14px;line-height:1.6;-webkit-tap-highlight-color:transparent;overscroll-behavior:none}
+.screen{display:none;min-height:100vh}
+.screen.on{display:block}
+
+/* ── HEADER ── */
+.app-header{display:flex;align-items:center;justify-content:space-between;padding:.9rem 1rem .7rem;background:var(--surface);border-bottom:1px solid var(--border);position:sticky;top:0;z-index:10}
+.app-title{font-size:18px;font-weight:500;letter-spacing:-.3px}
+.icon-btn{font-family:inherit;background:none;border:none;font-size:20px;color:var(--text-secondary);cursor:pointer;padding:4px 8px;border-radius:8px;line-height:1}
+.icon-btn:active{background:var(--accent-light)}
+
+/* ── HOME ── */
+.trip-list{padding:.9rem;display:flex;flex-direction:column;gap:10px}
+.empty-state{text-align:center;padding:3.5rem 1rem;color:var(--text-muted)}
+.empty-state p{font-size:15px;margin-bottom:6px}
+.empty-state small{font-size:12px}
+.trip-card{background:var(--surface);border:1px solid var(--border);border-radius:14px;padding:1rem 1.1rem;cursor:pointer}
+.trip-card:active{box-shadow:0 0 0 2px var(--accent-mid)}
+.tc-top{display:flex;align-items:flex-start;justify-content:space-between;margin-bottom:6px}
+.tc-name{font-size:16px;font-weight:500}
+.tc-dest{font-size:12px;color:var(--text-muted);margin-top:2px}
+.tc-badge{font-size:11px;background:var(--accent-light);color:var(--accent);padding:3px 9px;border-radius:10px;font-weight:500;white-space:nowrap;flex-shrink:0}
+.tc-dates{font-size:12px;color:var(--text-secondary);margin-bottom:9px}
+.tc-bar-bg{height:4px;background:var(--border);border-radius:2px;overflow:hidden}
+.tc-bar-fill{height:100%;background:var(--accent);border-radius:2px;transition:width .3s}
+.tc-pct{font-size:11px;color:var(--text-muted);margin-top:4px;text-align:right}
+
+/* ── PROGRESS ── */
+.prog-wrap{background:var(--surface);padding:.65rem 1rem;border-bottom:1px solid var(--border)}
+.prog-row{display:flex;justify-content:space-between;font-size:12px;color:var(--text-secondary);margin-bottom:5px}
+#prog-count{font-weight:500;color:var(--text-primary)}
+.prog-bar-bg{height:5px;background:var(--border);border-radius:3px;overflow:hidden}
+.prog-bar-fill{height:100%;background:var(--accent);border-radius:3px;transition:width .35s;width:0%}
+
+/* ── TABS ── */
+.tabs{display:flex;background:var(--surface);border-bottom:1px solid var(--border);padding:0 .5rem;overflow-x:auto;scrollbar-width:none}
+.tabs::-webkit-scrollbar{display:none}
+.tab{font-family:'Noto Sans KR',sans-serif;font-size:12px;padding:10px 13px;border:none;background:none;color:var(--text-muted);cursor:pointer;white-space:nowrap;border-bottom:2px solid transparent;transition:all .15s}
+.tab.on{color:var(--accent);border-bottom-color:var(--accent);font-weight:500}
+
+/* ── CHECKLIST ── */
+.cl-content{padding:.75rem 1rem 5.5rem}
+.notice{font-size:12px;padding:9px 12px;border-radius:8px;margin-bottom:12px;line-height:1.7}
+.notice-warn{background:var(--warn-bg);color:var(--warn-text);border-left:3px solid #f0b429}
+.notice-info{background:var(--info-bg);color:var(--info-text);border-left:3px solid #4a90d9}
+.sec{margin-bottom:1.25rem}
+.sec-title{font-size:10px;font-weight:500;color:var(--text-muted);letter-spacing:.1em;text-transform:uppercase;padding-bottom:5px;border-bottom:1px solid var(--border);margin-bottom:3px}
+.subsec-label{font-size:11px;color:var(--text-muted);padding:7px 0 2px}
+
+/* ── ITEM ── */
+.itm{border-bottom:1px solid var(--border-soft)}
+.itm:last-child{border-bottom:none}
+.itm-row{display:flex;align-items:center;gap:9px;padding:9px 0}
+.itm-cb{width:17px;height:17px;accent-color:var(--accent);flex-shrink:0;cursor:pointer}
+.itm-main{flex:1;display:flex;align-items:center;gap:5px;flex-wrap:wrap;min-width:0}
+.itm-label{font-size:14px;flex:1;min-width:0}
+.itm.done .itm-label{text-decoration:line-through;color:var(--text-muted)}
+.itm.is-local .itm-label{color:var(--text-muted)}
+.itm-qty{font-size:11px;background:var(--accent-light);color:var(--accent);padding:1px 7px;border-radius:10px;font-weight:500;white-space:nowrap}
+.itm.is-local .itm-qty{background:var(--local-bg);color:var(--local-text)}
+.tag{font-size:10px;padding:1px 6px;border-radius:4px;white-space:nowrap}
+.tag-warn{background:var(--warn-bg);color:var(--warn-text)}
+.tag-info{background:var(--info-bg);color:var(--info-text)}
+.tag-ok{background:var(--ok-bg);color:var(--ok-text)}
+.tag-local{background:var(--local-bg);color:var(--local-text)}
+.btn-local{background:none;border:1px solid var(--border);border-radius:6px;font-size:13px;padding:2px 5px;cursor:pointer;color:var(--text-muted);line-height:1;flex-shrink:0}
+.btn-local.on{border-color:var(--local-text);color:var(--local-text);background:var(--local-bg)}
+.btn-decant{background:none;border:1px solid var(--border);border-radius:6px;font-size:10px;padding:2px 7px;cursor:pointer;color:var(--text-muted);flex-shrink:0;letter-spacing:-.2px}
+.btn-decant.has-val{border-color:var(--accent-mid);color:var(--accent);background:var(--accent-light)}
+
+/* ── DECANT PANEL ── */
+.decant-panel{display:none;background:rgba(107,92,231,.05);border:1px solid var(--accent-mid);border-radius:10px;padding:10px 12px;margin:0 0 8px;gap:10px;flex-wrap:wrap;align-items:center}
+.decant-panel.open{display:flex}
+.dp-group{display:flex;flex-direction:column;gap:3px}
+.dp-group label{font-size:10px;color:var(--text-muted)}
+.dp-group input,.dp-group select{font-family:'Noto Sans KR',sans-serif;font-size:13px;border:1px solid var(--border);border-radius:6px;padding:5px 8px;background:var(--surface);color:var(--text-primary);width:90px}
+.dp-result{font-size:12px;background:var(--accent-light);color:var(--accent);border-radius:6px;padding:5px 10px;font-weight:500;align-self:flex-end}
+
+/* ── LOCAL TAB ITEMS ── */
+.local-row{display:flex;align-items:center;gap:9px;padding:9px 0;border-bottom:1px solid var(--border-soft)}
+.local-row:last-child{border-bottom:none}
+.local-row .local-label{flex:1;font-size:14px}
+.revert-btn{font-family:'Noto Sans KR',sans-serif;font-size:11px;background:none;border:1px solid var(--local-text);color:var(--local-text);border-radius:6px;padding:3px 9px;cursor:pointer}
+
+/* ── FAB ── */
+.fab{position:fixed;bottom:1.4rem;right:1.3rem;width:50px;height:50px;border-radius:50%;background:var(--accent);color:#fff;font-size:26px;border:none;cursor:pointer;box-shadow:0 3px 12px rgba(107,92,231,.4);display:flex;align-items:center;justify-content:center;z-index:20;line-height:1}
+.fab:active{transform:scale(.95)}
+
+/* ── MODAL ── */
+.modal-overlay{position:fixed;inset:0;background:rgba(0,0,0,.42);z-index:100;display:flex;align-items:flex-end}
+.modal{background:var(--surface);border-radius:20px 20px 0 0;width:100%;max-height:88vh;overflow-y:auto;padding-bottom:env(safe-area-inset-bottom,1rem)}
+.modal-hd{display:flex;align-items:center;justify-content:space-between;padding:1.1rem 1.2rem .8rem;font-size:16px;font-weight:500;border-bottom:1px solid var(--border);position:sticky;top:0;background:var(--surface);z-index:1}
+.modal-close{font-family:inherit;background:none;border:none;font-size:22px;color:var(--text-muted);cursor:pointer;padding:0 4px;line-height:1}
+.modal-body{padding:1.1rem 1.2rem;display:flex;flex-direction:column;gap:11px}
+.modal-body label{font-size:12px;color:var(--text-secondary);margin-bottom:-5px}
+.modal-body input[type=text],.modal-body input[type=date],.modal-body select{font-family:'Noto Sans KR',sans-serif;font-size:15px;border:1px solid var(--border);border-radius:10px;padding:10px 12px;background:var(--bg);color:var(--text-primary);width:100%}
+.modal-body input:focus,.modal-body select:focus{outline:none;border-color:var(--accent-mid)}
+.date-row{display:flex;gap:9px}
+.date-row>div{flex:1;display:flex;flex-direction:column;gap:4px}
+.nights-chip{background:var(--accent-light);color:var(--accent);border-radius:10px;padding:9px 14px;font-size:14px;font-weight:500;text-align:center}
+.modal-ft{padding:0 1.2rem 1.1rem;display:flex;gap:8px}
+.btn-primary{flex:1;font-family:'Noto Sans KR',sans-serif;font-size:15px;font-weight:500;background:var(--accent);color:#fff;border:none;border-radius:12px;padding:13px;cursor:pointer}
+.btn-primary:active{opacity:.85}
+.btn-danger{font-family:'Noto Sans KR',sans-serif;font-size:14px;background:none;color:var(--danger);border:1px solid var(--danger);border-radius:12px;padding:13px 16px;cursor:pointer}
+.cb-row{display:flex;align-items:center;gap:9px}
+.cb-row input[type=checkbox]{width:17px;height:17px;accent-color:var(--accent)}
+.cb-row label{font-size:14px;margin-bottom:0!important}
+
+/* ── SYNC ── */
+.sync-dot{position:fixed;top:0;left:50%;transform:translateX(-50%);background:var(--accent);color:#fff;font-size:11px;padding:3px 13px;border-radius:0 0 9px 9px;z-index:200;opacity:0;transition:opacity .25s;pointer-events:none}
+.sync-dot.show{opacity:1}
+
+/* ── HEADER INFO ── */
+.hd-info{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:1px}
+.hd-name{font-size:15px;font-weight:500;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:180px}
+.hd-nights{font-size:11px;color:var(--text-muted)}
+</style>
+</head>
+<body>
+
+<div class="sync-dot" id="sync-dot">저장 중...</div>
+
+<!-- ─── Screen: Home ─── -->
+<div id="s-home" class="screen on">
+  <header class="app-header">
+    <div class="app-title">🧳 짐싸기</div>
+    <button class="icon-btn" id="btn-new">＋</button>
+  </header>
+  <div id="trip-list" class="trip-list"></div>
+  <div id="empty-state" class="empty-state" style="display:none">
+    <p>아직 여행이 없어요</p>
+    <small>오른쪽 위 ＋ 버튼으로 추가하세요</small>
+  </div>
+</div>
+
+<!-- ─── Screen: Checklist ─── -->
+<div id="s-trip" class="screen">
+  <header class="app-header" style="gap:6px">
+    <button class="icon-btn" id="btn-back">←</button>
+    <div class="hd-info">
+      <span class="hd-name" id="hd-name"></span>
+      <span class="hd-nights" id="hd-nights"></span>
+    </div>
+    <button class="icon-btn" id="btn-edit">···</button>
+  </header>
+  <div class="prog-wrap">
+    <div class="prog-row">
+      <span>짐 준비 현황 <span style="color:var(--text-muted);font-size:11px">(현지구매 제외)</span></span>
+      <span id="prog-count">0 / 0</span>
+    </div>
+    <div class="prog-bar-bg"><div class="prog-bar-fill" id="prog-bar"></div></div>
+  </div>
+  <div class="tabs">
+    <button class="tab on" data-tab="pack">짐 목록</button>
+    <button class="tab" data-tab="todo">출발 전 할 일</button>
+    <button class="tab" data-tab="local">현지 구매</button>
+    <button class="tab" data-tab="recommend">추천</button>
+  </div>
+  <div id="cl-content" class="cl-content"></div>
+  <button class="fab" id="btn-add-item">＋</button>
+</div>
+
+<!-- ─── Modal: Trip ─── -->
+<div id="m-trip" class="modal-overlay" style="display:none">
+  <div class="modal">
+    <div class="modal-hd">
+      <span id="m-trip-title">새 여행</span>
+      <button class="modal-close" id="m-trip-close">×</button>
+    </div>
+    <div class="modal-body">
+      <label>여행 이름</label>
+      <input type="text" id="inp-name" placeholder="예: 도쿄 2025 봄">
+      <label>목적지</label>
+      <input type="text" id="inp-dest" placeholder="예: 도쿄, 일본">
+      <label>날짜</label>
+      <div class="date-row">
+        <div>
+          <label style="font-size:11px;color:var(--text-muted)">출발일</label>
+          <input type="date" id="inp-start">
+        </div>
+        <div>
+          <label style="font-size:11px;color:var(--text-muted)">귀국일</label>
+          <input type="date" id="inp-end">
+        </div>
+      </div>
+      <div class="nights-chip" id="nights-chip" style="display:none" id="nights-chip"></div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn-danger" id="btn-del-trip" style="display:none">삭제</button>
+      <button class="btn-primary" id="btn-save-trip">만들기</button>
+    </div>
+  </div>
+</div>
+
+<!-- ─── Modal: Add Item ─── -->
+<div id="m-item" class="modal-overlay" style="display:none">
+  <div class="modal">
+    <div class="modal-hd">
+      <span>항목 추가</span>
+      <button class="modal-close" id="m-item-close">×</button>
+    </div>
+    <div class="modal-body">
+      <label>항목 이름</label>
+      <input type="text" id="inp-ilabel" placeholder="예: 선글라스">
+      <label>카테고리</label>
+      <input type="text" id="inp-icat" placeholder="예: 가방·소지품">
+      <label>탭</label>
+      <select id="inp-itab">
+        <option value="pack">짐 목록</option>
+        <option value="todo">출발 전 할 일</option>
+        <option value="local">현지 구매</option>
+        <option value="recommend">추천</option>
+      </select>
+      <div class="cb-row">
+        <input type="checkbox" id="inp-iml">
+        <label for="inp-iml">화장품 소분 계산기 추가</label>
+      </div>
+    </div>
+    <div class="modal-ft">
+      <button class="btn-primary" id="btn-save-item">추가</button>
+    </div>
+  </div>
+</div>
+
+<script type="module">
+// ══════════════════════════════════════════
+//  ★ FIREBASE CONFIG — 새 프로젝트 정보 입력
+// ══════════════════════════════════════════
+import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { getDatabase, ref, set, onValue, update, remove }
+  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+
+const FB_CONFIG = {
+  apiKey:            "AIzaSyD3ySh1kJ6vSg3EX88SksA7Xc-XsSjdVdg",
+  authDomain:        "jimssagi.firebaseapp.com",
+  databaseURL:       "https://jimssagi-default-rtdb.firebaseio.com",
+  projectId:         "jimssagi",
+  storageBucket:     "jimssagi.firebasestorage.app",
+  messagingSenderId: "1079308617911",
+  appId:             "1:1079308617911:web:928c5a5b3f430ccadf2532"
+};
+const DB_ROOT = '/packing-trips';
+
+let app, db;
+try {
+  app = initializeApp(FB_CONFIG);
+  db  = getDatabase(app);
+} catch(e) {
+  document.body.innerHTML = `<div style="padding:2rem;font-family:sans-serif;color:#e53e3e">
+    <b>Firebase 설정이 필요합니다</b><br><br>
+    HTML 파일 내 <code>FB_CONFIG</code> 항목에<br>새 Firebase 프로젝트 정보를 입력해주세요.
+  </div>`;
+  throw e;
+}
+
+// ── STATE ──────────────────────────────
+let tripId  = null;  // 현재 보고 있는 트립
+let curTab  = 'pack';
+let editId  = null;  // 모달 편집 중인 트립
+let db_data = {};    // { [tripId]: { meta, items } }
+
+// ── HELPERS ────────────────────────────
+const esc = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+
+function calcNights(s, e) {
+  if (!s || !e) return 0;
+  return Math.max(0, Math.round((new Date(e) - new Date(s)) / 86400000));
+}
+
+function calcQty(formula, n) {
+  if (!formula) return 1;
+  try { return Math.max(1, Math.round(eval(formula))); } catch { return 1; }
+}
+
+function calcDecant(ml, cml) {
+  if (!ml || !cml) return null;
+  return Math.ceil(ml / cml);
+}
+
+function nightsLabel(n) {
+  return n === 0 ? '당일치기' : `${n}박 ${n+1}일`;
+}
+
+function showSync() {
+  const el = document.getElementById('sync-dot');
+  el.classList.add('show');
+  clearTimeout(el._t);
+  el._t = setTimeout(() => el.classList.remove('show'), 900);
+}
+
+function showScreen(id) {
+  document.querySelectorAll('.screen').forEach(s => s.classList.remove('on'));
+  document.getElementById(id).classList.add('on');
+}
+
+// ── FIREBASE OPS ───────────────────────
+async function dbSet(path, val) { showSync(); await set(ref(db, path), val); }
+async function dbUpd(path, val) { showSync(); await update(ref(db, path), val); }
+async function dbDel(path)      { showSync(); await remove(ref(db, path)); }
+
+// ── TEMPLATE ITEMS ─────────────────────
+function makeTemplate(nights) {
+  const T = [
+    // section:'pack' — 의류
+    {l:'팬티',        c:'의류',    f:'n+1'},
+    {l:'양말',        c:'의류',    f:'n+1'},
+    {l:'브라',        c:'의류',    f:'Math.ceil((n+1)/2)'},
+    {l:'외출복',      c:'의류',    f:'Math.ceil(n*0.8)+1'},
+    {l:'머리끈',      c:'의류'},
+    // 스킨케어
+    {l:'마몽드 리퀴드 마스크',      c:'스킨케어', sub:'아침 루틴', ml:1, ti:'info', tt:'휴대용'},
+    {l:'리들샷 하이드로 100',       c:'스킨케어', sub:'아침 루틴', ml:1},
+    {l:'리들샷 스네일 100',         c:'스킨케어', sub:'아침 루틴', ml:1},
+    {l:'프리메라 비타티놀 크림',    c:'스킨케어', sub:'아침 루틴', ml:1},
+    {l:'선크림',                    c:'스킨케어', sub:'아침 루틴', ml:1},
+    {l:'리들샷 하이드로 300',       c:'스킨케어', sub:'밤 루틴',  ml:1},
+    {l:'리들샷 스네일 300',         c:'스킨케어', sub:'밤 루틴',  ml:1},
+    {l:'숨 마이크로엑티브 에센스',  c:'스킨케어', sub:'밤 루틴',  ml:1, ti:'info', tt:'휴대용'},
+    {l:'리들샷 리페어 크림',        c:'스킨케어', sub:'밤 루틴',  ml:1, ti:'info', tt:'휴대용'},
+    {l:'아스트로 초록크림',         c:'스킨케어', sub:'밤 루틴',  ml:1, ti:'info', tt:'휴대용'},
+    {l:'필링젤',                    c:'스킨케어', sub:'기타',     ml:1},
+    {l:'수건 1~2장',                c:'스킨케어', sub:'기타'},
+    // 메이크업
+    {l:'메포 프라이머',             c:'메이크업', ml:1},
+    {l:'에이지 트웨니스 팩트 2통',  c:'메이크업'},
+    {l:'아르마니 파데 + 파데 브러시',c:'메이크업', ml:1},
+    {l:'메포 픽서',                 c:'메이크업', ml:1},
+    {l:'섀딩 + 섀딩 브러시',       c:'메이크업'},
+    {l:'블러셔 + 블러셔 퍼프',     c:'메이크업'},
+    {l:'하이라이터 + 하이라이터 퍼프',c:'메이크업'},
+    {l:'웨메 립',                   c:'메이크업'},
+    {l:'디올 립',                   c:'메이크업'},
+    {l:'핸드크림',                  c:'메이크업', ml:1},
+    {l:'뷰티 디바이스 (비베카)',     c:'메이크업'},
+    // 렌즈·안경
+    {l:'렌즈 통 (착용 후 출발)',    c:'렌즈·안경'},
+    {l:'안경',                      c:'렌즈·안경'},
+    // 전자기기
+    {l:'노트북',                    c:'전자기기', ti:'info', tt:'기내 반입'},
+    {l:'노트북 충전기',             c:'전자기기'},
+    {l:'노트북 마우스',             c:'전자기기'},
+    {l:'노트북 가방',               c:'전자기기'},
+    {l:'핸드폰 충전기',             c:'전자기기'},
+    {l:'블루투스 스피커',           c:'전자기기'},
+    {l:'무선 이어폰',               c:'전자기기'},
+    // 가방·소지품
+    {l:'외출용 사이드백',           c:'가방·소지품'},
+    {l:'다회용 장바구니',           c:'가방·소지품'},
+    {l:'일본 돈통',                 c:'가방·소지품'},
+    {l:'우산',                      c:'가방·소지품'},
+    {l:'플러그 어댑터',             c:'가방·소지품', ti:'warn', tt:'원형→납작 변환'},
+    // 서류·카드
+    {l:'여권',                      c:'서류·카드'},
+    {l:'일본 체크카드',             c:'서류·카드'},
+    {l:'인터넷 면세품',             c:'서류·카드', ti:'warn', tt:'공항 인도장 수령'},
+    // ── todo ──
+    {l:'이심 (eSIM) 구매',          c:'출발 전', s:'todo'},
+    {l:'여행자보험 접수',           c:'출발 전', s:'todo'},
+    {l:'스카이라이너 예매',         c:'출발 전', s:'todo'},
+    {l:'일본 체크카드 사용 등록',   c:'출발 전', s:'todo'},
+    {l:'환전 (엔화)',               c:'출발 전', s:'todo'},
+    // ── local ──
+    {l:'치약·칫솔',                 c:'현지 구매', s:'local'},
+    {l:'샴푸·트리트먼트·컬크림',   c:'현지 구매', s:'local'},
+    {l:'클렌징크림·클렌징폼',       c:'현지 구매', s:'local'},
+    {l:'바디워시·세면밴드',         c:'현지 구매', s:'local'},
+    {l:'렌즈 세정제',               c:'현지 구매', s:'local'},
+    {l:'교통카드 (Welcome Suica)',   c:'현지 구매', s:'local', ti:'info', tt:'보증금 없음·28일'},
+    // ── recommend ──
+    {l:'얇은 겉옷 (카디건·바람막이)',c:'추천', s:'recommend'},
+    {l:'상비약 (진통제·소화제·밴드)',c:'추천', s:'recommend'},
+    {l:'지퍼백 (액체류 소분 포장)', c:'추천', s:'recommend'},
+  ];
+
+  const out = {};
+  T.forEach((t, i) => {
+    const id = 'i' + Date.now() + '_' + i;
+    const sec = t.s || 'pack';
+    const qty = (t.f && nights > 0) ? calcQty(t.f, nights) : null;
+    out[id] = {
+      id, label:t.l, cat:t.c, sub:t.sub||null,
+      section: sec, checked:false, localBuy:false,
+      qty, qtyF:t.f||null,
+      hasMl:!!(t.ml), ml:null, cml:50,
+      ti:t.ti||null, tt:t.tt||null,
+      ord:i
+    };
+  });
+  return out;
+}
+
+// ── HOME RENDER ────────────────────────
+function renderHome() {
+  const list  = document.getElementById('trip-list');
+  const empty = document.getElementById('empty-state');
+  const ids   = Object.keys(db_data);
+
+  if (!ids.length) { list.innerHTML=''; empty.style.display='block'; return; }
+  empty.style.display = 'none';
+
+  ids.sort((a,b) => (db_data[b].meta?.ca||0) - (db_data[a].meta?.ca||0));
+
+  list.innerHTML = ids.map(id => {
+    const {meta, items} = db_data[id] || {};
+    if (!meta) return '';
+    const all   = Object.values(items||{});
+    const pack  = all.filter(i => i.section==='pack' && !i.localBuy);
+    const done  = pack.filter(i => i.checked).length;
+    const total = pack.length;
+    const pct   = total ? Math.round(done/total*100) : 0;
+    const nights = meta.nights || 0;
+    const dates  = meta.start && meta.end
+      ? `${meta.start.slice(5).replace('-','/')} ~ ${meta.end.slice(5).replace('-','/')}`
+      : '날짜 미정';
+    return `<div class="trip-card" onclick="APP.openTrip('${id}')">
+      <div class="tc-top">
+        <div>
+          <div class="tc-name">${esc(meta.name||'이름 없음')}</div>
+          <div class="tc-dest">${esc(meta.dest||'')}</div>
+        </div>
+        <div class="tc-badge">${nightsLabel(nights)}</div>
+      </div>
+      <div class="tc-dates">${dates}</div>
+      <div class="tc-bar-bg"><div class="tc-bar-fill" style="width:${pct}%"></div></div>
+      <div class="tc-pct">${done} / ${total} 준비 완료</div>
+    </div>`;
+  }).join('');
+}
+
+// ── CHECKLIST RENDER ───────────────────
+function renderChecklist() {
+  if (!tripId) return;
+  const data  = db_data[tripId];
+  if (!data) return;
+  const items = Object.values(data.items||{}).sort((a,b)=>(a.ord||0)-(b.ord||0));
+
+  updateProgress(items);
+
+  const el = document.getElementById('cl-content');
+  if (curTab === 'pack')      el.innerHTML = renderPack(items, data.meta);
+  else if (curTab === 'todo') el.innerHTML = renderSimple(items, 'todo');
+  else if (curTab === 'local')el.innerHTML = renderLocal(items);
+  else                        el.innerHTML = renderSimple(items, 'recommend');
+}
+
+function updateProgress(items) {
+  const pack  = (items||[]).filter(i => i.section==='pack' && !i.localBuy);
+  const done  = pack.filter(i => i.checked).length;
+  const total = pack.length;
+  const pct   = total ? Math.round(done/total*100) : 0;
+  document.getElementById('prog-count').textContent = `${done} / ${total}`;
+  document.getElementById('prog-bar').style.width   = pct + '%';
+  // Update home card too
+  renderHome();
+}
+
+function renderPack(items, meta) {
+  const nights = meta?.nights || 0;
+  const pack   = items.filter(i => i.section==='pack');
+  const cats   = [...new Set(pack.map(i => i.cat))];
+
+  let html = `<div class="notice notice-warn">노트북 기내 반입 시 캐리어 위탁 수하물 자동 확정 · 액체류 100ml 초과 제품은 위탁 분류</div>`;
+
+  cats.forEach(cat => {
+    const ci = pack.filter(i => i.cat === cat);
+    html += `<div class="sec"><div class="sec-title">${esc(cat)}</div>`;
+    const subs = [...new Set(ci.map(i => i.sub||''))];
+    subs.forEach(sub => {
+      if (sub) html += `<div class="subsec-label">— ${esc(sub)}</div>`;
+      ci.filter(i=>(i.sub||'')===sub).forEach(item => {
+        html += renderPackItem(item, nights);
+      });
+    });
+    html += `</div>`;
+  });
+  return html;
+}
+
+function renderPackItem(item, nights) {
+  const isLocal = item.localBuy;
+  const isDone  = item.checked;
+
+  // qty badge
+  let qtyHtml = '';
+  if (item.qtyF && nights > 0) {
+    const q = calcQty(item.qtyF, nights);
+    qtyHtml = `<span class="itm-qty">${nights}박 기준 ×${q}</span>`;
+  }
+
+  // tag
+  let tagHtml = '';
+  if (item.ti) tagHtml += `<span class="tag tag-${item.ti}">${esc(item.tt||'')}</span>`;
+  if (isLocal)  tagHtml += `<span class="tag tag-local">🛒 현지구매</span>`;
+
+  // decant
+  let decantBtn = '', decantPanel = '';
+  if (item.hasMl) {
+    const hasVal = item.ml && item.ml > 0;
+    const needed = hasVal ? calcDecant(item.ml, item.cml||50) : null;
+    decantBtn = `<button class="btn-decant${hasVal?' has-val':''}" onclick="APP.toggleDecant('${item.id}')">소분</button>`;
+    decantPanel = `
+      <div class="decant-panel" id="dp-${item.id}">
+        <div class="dp-group">
+          <label>원본 용량 (ml)</label>
+          <input type="number" min="0" max="9999" placeholder="예: 150"
+            value="${item.ml||''}"
+            onchange="APP.saveDecant('${item.id}',this.value,document.getElementById('dc-${item.id}').value)">
+        </div>
+        <div class="dp-group">
+          <label>용기 사이즈</label>
+          <select id="dc-${item.id}"
+            onchange="APP.saveDecant('${item.id}',this.parentElement.previousElementSibling.querySelector('input').value,this.value)">
+            <option value="30" ${(item.cml||50)==30?'selected':''}>30ml</option>
+            <option value="50" ${(item.cml||50)==50?'selected':''}>50ml</option>
+            <option value="100" ${(item.cml||50)==100?'selected':''}>100ml</option>
+          </select>
+        </div>
+        ${needed ? `<div class="dp-result" id="dpr-${item.id}">용기 ${needed}개 필요</div>` : `<div class="dp-result" id="dpr-${item.id}" style="display:none"></div>`}
+      </div>`;
+  }
+
+  return `
+    <div class="itm ${isDone&&!isLocal?'done':''} ${isLocal?'is-local':''}" id="itm-${item.id}">
+      <div class="itm-row">
+        <input type="checkbox" class="itm-cb" id="cb-${item.id}"
+          ${isDone?'checked':''} ${isLocal?'disabled':''}
+          onchange="APP.toggleCheck('${item.id}',this.checked)">
+        <div class="itm-main">
+          <label class="itm-label" for="cb-${item.id}">${esc(item.label)}</label>
+          ${qtyHtml}${tagHtml}
+        </div>
+        ${decantBtn}
+        <button class="btn-local${isLocal?' on':''}" onclick="APP.toggleLocal('${item.id}')" title="현지구매 전환">🛒</button>
+      </div>
+      ${decantPanel}
+    </div>`;
+}
+
+function renderSimple(items, section) {
+  const si = items.filter(i => i.section === section);
+  if (!si.length) return `<div style="padding:2rem;text-align:center;color:var(--text-muted)">항목이 없어요</div>`;
+  const cats = [...new Set(si.map(i=>i.cat||'기타'))];
+  return cats.map(cat => {
+    const ci = si.filter(i=>(i.cat||'기타')===cat);
+    return `<div class="sec"><div class="sec-title">${esc(cat)}</div>
+      ${ci.map(item=>`
+        <div class="itm ${item.checked?'done':''}" id="itm-${item.id}">
+          <div class="itm-row">
+            <input type="checkbox" class="itm-cb" id="cb-${item.id}"
+              ${item.checked?'checked':''}
+              onchange="APP.toggleCheck('${item.id}',this.checked)">
+            <div class="itm-main">
+              <label class="itm-label" for="cb-${item.id}">${esc(item.label)}</label>
+              ${item.ti?`<span class="tag tag-${item.ti}">${esc(item.tt||'')}</span>`:''}
+            </div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+  }).join('');
+}
+
+function renderLocal(items) {
+  const fromPack  = items.filter(i => i.section==='pack' && i.localBuy);
+  const localOnly = items.filter(i => i.section==='local');
+
+  let html = `<div class="notice notice-info">현지에서 구매 예정인 항목이에요. 따로 챙기지 않아도 돼요.</div>`;
+
+  if (fromPack.length) {
+    html += `<div class="sec"><div class="sec-title">짐 목록에서 이동됨</div>`;
+    fromPack.forEach(item => {
+      html += `<div class="local-row">
+        <span>🛒</span>
+        <span class="local-label">${esc(item.label)}</span>
+        <button class="revert-btn" onclick="APP.toggleLocal('${item.id}')">되돌리기</button>
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (localOnly.length) {
+    html += `<div class="sec"><div class="sec-title">기본 현지 구매 목록</div>`;
+    localOnly.forEach(item => {
+      html += `<div class="local-row">
+        <span style="color:var(--text-muted)">·</span>
+        <span class="local-label">${esc(item.label)}</span>
+        ${item.ti?`<span class="tag tag-${item.ti}">${esc(item.tt||'')}</span>`:''}
+      </div>`;
+    });
+    html += `</div>`;
+  }
+
+  if (!fromPack.length && !localOnly.length) {
+    html += `<div style="padding:2rem;text-align:center;color:var(--text-muted)">항목이 없어요</div>`;
+  }
+  return html;
+}
+
+// ── GLOBAL ACTIONS ─────────────────────
+const APP = {
+  openTrip(id) {
+    tripId = id;
+    curTab = 'pack';
+    const m = db_data[id]?.meta || {};
+    document.getElementById('hd-name').textContent    = m.name  || '';
+    document.getElementById('hd-nights').textContent  = m.nights ? nightsLabel(m.nights) : '';
+    document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.tab==='pack'));
+    showScreen('s-trip');
+    renderChecklist();
+  },
+
+  async toggleCheck(itemId, checked) {
+    await dbUpd(`${DB_ROOT}/${tripId}/items/${itemId}`, { checked });
+  },
+
+  async toggleLocal(itemId) {
+    const item = db_data[tripId]?.items?.[itemId];
+    if (!item) return;
+    await dbUpd(`${DB_ROOT}/${tripId}/items/${itemId}`, { localBuy: !item.localBuy, checked: false });
+  },
+
+  toggleDecant(itemId) {
+    document.getElementById('dp-'+itemId)?.classList.toggle('open');
+  },
+
+  async saveDecant(itemId, mlVal, cmlVal) {
+    const ml  = parseFloat(mlVal) || null;
+    const cml = parseInt(cmlVal) || 50;
+    await dbUpd(`${DB_ROOT}/${tripId}/items/${itemId}`, { ml, cml });
+    // Update result UI immediately
+    const needed = ml ? calcDecant(ml, cml) : null;
+    const resEl  = document.getElementById('dpr-'+itemId);
+    if (resEl) {
+      resEl.textContent   = needed ? `용기 ${needed}개 필요` : '';
+      resEl.style.display = needed ? '' : 'none';
+    }
+    // Update btn style
+    const btn = document.querySelector(`#itm-${itemId} .btn-decant`);
+    if (btn) btn.classList.toggle('has-val', !!ml);
+  }
+};
+window.APP = APP;
+
+// ── TRIP MODAL ─────────────────────────
+function openTripModal(id = null) {
+  editId = id;
+  const isEdit = !!id;
+  const m = isEdit ? (db_data[id]?.meta || {}) : {};
+
+  document.getElementById('m-trip-title').textContent = isEdit ? '여행 수정' : '새 여행';
+  document.getElementById('btn-save-trip').textContent = isEdit ? '저장' : '만들기';
+  document.getElementById('btn-del-trip').style.display = isEdit ? 'block' : 'none';
+  document.getElementById('inp-name').value  = m.name  || '';
+  document.getElementById('inp-dest').value  = m.dest  || '';
+  document.getElementById('inp-start').value = m.start || '';
+  document.getElementById('inp-end').value   = m.end   || '';
+  updateNightsChip();
+  document.getElementById('m-trip').style.display = 'flex';
+}
+
+function closeTripModal() {
+  document.getElementById('m-trip').style.display = 'none';
+  editId = null;
+}
+
+function updateNightsChip() {
+  const s = document.getElementById('inp-start').value;
+  const e = document.getElementById('inp-end').value;
+  const n = calcNights(s, e);
+  const chip = document.getElementById('nights-chip');
+  if (s && e) {
+    chip.textContent = nightsLabel(n);
+    chip.style.display = 'block';
+  } else {
+    chip.style.display = 'none';
+  }
+}
+
+async function saveTripHandler() {
+  const name  = document.getElementById('inp-name').value.trim();
+  const dest  = document.getElementById('inp-dest').value.trim();
+  const start = document.getElementById('inp-start').value;
+  const end   = document.getElementById('inp-end').value;
+  if (!name) { alert('여행 이름을 입력해주세요'); return; }
+  const nights = calcNights(start, end);
+
+  if (editId) {
+    // Edit — recalculate auto qtys
+    const meta = { ...db_data[editId]?.meta, name, dest, start, end, nights };
+    await dbSet(`${DB_ROOT}/${editId}/meta`, meta);
+    const items = db_data[editId]?.items || {};
+    const upd = {};
+    Object.entries(items).forEach(([iid, item]) => {
+      if (item.qtyF && nights > 0) upd[`${DB_ROOT}/${editId}/items/${iid}/qty`] = calcQty(item.qtyF, nights);
+    });
+    if (Object.keys(upd).length) { showSync(); await update(ref(db, '/'), upd); }
+    closeTripModal();
+  } else {
+    // Create
+    const id   = 'trip_' + Date.now();
+    const meta = { name, dest, start, end, nights, ca: Date.now() };
+    const items = makeTemplate(nights);
+    await dbSet(`${DB_ROOT}/${id}`, { meta, items });
+    closeTripModal();
+    APP.openTrip(id);
+  }
+}
+
+async function deleteTripHandler() {
+  if (!editId) return;
+  if (!confirm(`"${db_data[editId]?.meta?.name}" 여행을 삭제할까요?`)) return;
+  await dbDel(`${DB_ROOT}/${editId}`);
+  delete db_data[editId];
+  closeTripModal();
+  tripId = null;
+  showScreen('s-home');
+  renderHome();
+}
+
+// ── ADD ITEM MODAL ─────────────────────
+function openAddModal() {
+  document.getElementById('inp-ilabel').value = '';
+  document.getElementById('inp-icat').value   = '';
+  document.getElementById('inp-itab').value   = curTab==='local'?'local':curTab==='todo'?'todo':curTab==='recommend'?'recommend':'pack';
+  document.getElementById('inp-iml').checked  = false;
+  document.getElementById('m-item').style.display = 'flex';
+}
+
+function closeAddModal() {
+  document.getElementById('m-item').style.display = 'none';
+}
+
+async function saveItemHandler() {
+  const label  = document.getElementById('inp-ilabel').value.trim();
+  const cat    = document.getElementById('inp-icat').value.trim() || '기타';
+  const section= document.getElementById('inp-itab').value;
+  const hasMl  = document.getElementById('inp-iml').checked;
+  if (!label) { alert('항목 이름을 입력해주세요'); return; }
+  const existCount = Object.keys(db_data[tripId]?.items||{}).length;
+  const id = 'i' + Date.now();
+  await dbSet(`${DB_ROOT}/${tripId}/items/${id}`, {
+    id, label, cat, sub:null, section,
+    checked:false, localBuy:false,
+    qty:null, qtyF:null,
+    hasMl, ml:null, cml:50,
+    ti:null, tt:null, ord: existCount
+  });
+  closeAddModal();
+}
+
+// ── EVENTS ─────────────────────────────
+document.getElementById('btn-new').onclick      = () => openTripModal(null);
+document.getElementById('btn-edit').onclick     = () => openTripModal(tripId);
+document.getElementById('btn-back').onclick     = () => { tripId=null; showScreen('s-home'); renderHome(); };
+document.getElementById('btn-save-trip').onclick = saveTripHandler;
+document.getElementById('btn-del-trip').onclick  = deleteTripHandler;
+document.getElementById('m-trip-close').onclick  = closeTripModal;
+document.getElementById('btn-add-item').onclick  = openAddModal;
+document.getElementById('btn-save-item').onclick = saveItemHandler;
+document.getElementById('m-item-close').onclick  = closeAddModal;
+document.getElementById('inp-start').addEventListener('change', updateNightsChip);
+document.getElementById('inp-end').addEventListener('change', updateNightsChip);
+
+document.querySelectorAll('.tab').forEach(t => {
+  t.onclick = function() {
+    document.querySelectorAll('.tab').forEach(x => x.classList.remove('on'));
+    this.classList.add('on');
+    curTab = this.dataset.tab;
+    renderChecklist();
+  };
+});
+
+document.querySelectorAll('.modal-overlay').forEach(o => {
+  o.onclick = e => { if (e.target === o) o.style.display = 'none'; };
+});
+
+// ── PWA MANIFEST ───────────────────────
+const mani = JSON.stringify({
+  name:'짐싸기', short_name:'짐싸기',
+  start_url:'/aheoriya/packing/',
+  scope:'/aheoriya/packing/',
+  display:'standalone',
+  background_color:'#f7f6f2', theme_color:'#6b5ce7',
+  icons:[{src:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🧳</text></svg>',sizes:'any',type:'image/svg+xml'}]
+});
+const mLink = document.createElement('link');
+mLink.rel = 'manifest';
+mLink.href = URL.createObjectURL(new Blob([mani], {type:'application/json'}));
+document.head.appendChild(mLink);
+
+// ── FIREBASE LISTENER + INIT ────────────
+onValue(ref(db, DB_ROOT), snap => {
+  db_data = snap.exists() ? snap.val() : {};
+  renderHome();
+  if (tripId && db_data[tripId]) {
+    const m = db_data[tripId].meta || {};
+    document.getElementById('hd-name').textContent   = m.name   || '';
+    document.getElementById('hd-nights').textContent = m.nights ? nightsLabel(m.nights) : '';
+    renderChecklist();
+  }
+}, err => console.error('Firebase error:', err));
+</script>
+</body>
+</html>
