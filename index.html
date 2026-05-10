@@ -77,8 +77,9 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 @media (min-width:560px){#cat-list{column-count:3}}
 @media (min-width:840px){#cat-list{column-count:4}}
 .edit-mode #cat-list{column-count:1}
-#cat-list .itm-row{padding:6px 0;gap:5px}
-#cat-list .itm-label{font-size:13px;line-height:1.4}
+#cat-list .itm-row{padding:6px 0;gap:5px;align-items:flex-start}
+#cat-list .itm-main{row-gap:4px}
+#cat-list .itm-label{flex:1 1 100%;font-size:13px;line-height:1.4;min-width:0;white-space:normal;word-break:break-word}
 #cat-list .itm-qty{font-size:10px;padding:1px 5px}
 
 /* ── ITEM ── */
@@ -894,7 +895,8 @@ function renderPackItem(item, nights) {
   let decantChip = '';
   if (item.hasMl) {
     let info = '소분';
-    if (item.pumpsPerDay && item.mlPerPump) info = `${(item.pumpsPerDay*item.mlPerPump).toFixed(1)}ml/일`;
+    const pumpMl = calcPumpMl(item.pumpsPerDay, item.mlPerPump, nights);
+    if (pumpMl != null) info = `${pumpMl}ml 필요`;
     else if (item.ml) info = `${item.ml}ml`;
     decantChip = `<span class="itm-decant" onclick="event.preventDefault();event.stopPropagation();APP.toggleHasMl('${item.id}')" title="탭하여 소분 끄기">💧 ${info}</span>`;
   } else {
