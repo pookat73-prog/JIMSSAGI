@@ -405,9 +405,8 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 
       <label>수하물 분류 (짐 목록 탭에서만 사용)</label>
       <select id="inp-ibag">
-        <option value="">미정</option>
+        <option value="checked">🧳 위탁 수하물 (기본)</option>
         <option value="carry">🛄 기내 반입</option>
-        <option value="checked">🧳 위탁 수하물</option>
       </select>
 
       <div class="cb-row">
@@ -806,16 +805,15 @@ function renderPack(items, meta) {
   const nights = meta?.nights || 0;
   const allPack = items.filter(i => i.section==='pack');
   const carryN  = allPack.filter(i => i.bag === 'carry').length;
-  const checkedN= allPack.filter(i => i.bag === 'checked').length;
-  const noneN   = allPack.length - carryN - checkedN;
+  const checkedN= allPack.length - carryN; // 기내 아니면 모두 위탁
   const decantItems = allPack.filter(i => i.hasMl);
   const decantN = decantItems.length;
 
   // 필터 적용: bag + 소분 (AND)
   let pack = allPack;
-  if (_bagFilter === 'none') pack = pack.filter(i => !i.bag);
-  else if (_bagFilter)        pack = pack.filter(i => i.bag === _bagFilter);
-  if (_decantOnly)             pack = pack.filter(i => i.hasMl);
+  if (_bagFilter === 'carry')        pack = pack.filter(i => i.bag === 'carry');
+  else if (_bagFilter === 'checked') pack = pack.filter(i => i.bag !== 'carry');
+  if (_decantOnly)                    pack = pack.filter(i => i.hasMl);
 
   const cats = getCatOrder(items, 'pack', meta)
     .filter(c => pack.some(i => (i.cat||'기타') === c));
@@ -827,7 +825,6 @@ function renderPack(items, meta) {
     ${chip('', '전체', allPack.length)}
     ${chip('carry', '🛄 기내', carryN)}
     ${chip('checked', '🧳 위탁', checkedN)}
-    ${noneN > 0 ? chip('none', '미정', noneN) : ''}
     ${decantN > 0 ? decantBtn : ''}
   </div>`;
 
@@ -987,15 +984,11 @@ function renderPackItem(item, nights) {
     decantChip = `<span class="itm-decant empty" onclick="event.preventDefault();event.stopPropagation();APP.enableDecant('${item.id}')" title="탭하여 소분 켜기">💧 소분?</span>`;
   }
 
-  // 수하물 분류 칩 (기내/위탁) — 탭하면 carry → checked → 없음 순환
-  let bagChip = '';
-  if (item.bag === 'carry') {
-    bagChip = `<span class="itm-bag carry" onclick="event.preventDefault();event.stopPropagation();APP.cycleBag('${item.id}')">🛄 기내</span>`;
-  } else if (item.bag === 'checked') {
-    bagChip = `<span class="itm-bag checked" onclick="event.preventDefault();event.stopPropagation();APP.cycleBag('${item.id}')">🧳 위탁</span>`;
-  } else {
-    bagChip = `<span class="itm-bag empty" onclick="event.preventDefault();event.stopPropagation();APP.cycleBag('${item.id}')" title="탭하여 기내/위탁 지정">🛄?</span>`;
-  }
+  // 수하물 분류 칩 — 기본 위탁, 기내만 별도 표시. 탭하면 토글.
+  const isCarry = item.bag === 'carry';
+  const bagChip = isCarry
+    ? `<span class="itm-bag carry" onclick="event.preventDefault();event.stopPropagation();APP.cycleBag('${item.id}')" title="탭하여 위탁으로">🛄 기내</span>`
+    : `<span class="itm-bag checked" onclick="event.preventDefault();event.stopPropagation();APP.cycleBag('${item.id}')" title="탭하여 기내로">🧳 위탁</span>`;
 
   // tag
   let tagHtml = '';
@@ -1409,8 +1402,7 @@ const APP = {
   async cycleBag(itemId) {
     const item = db_data[tripId]?.items?.[itemId];
     if (!item) return;
-    const cur = item.bag || '';
-    const next = cur === '' ? 'carry' : cur === 'carry' ? 'checked' : null;
+    const next = item.bag === 'carry' ? 'checked' : 'carry';
     await dbUpd(`${DB_ROOT}/${tripId}/items/${itemId}`, { bag: next });
   },
 
@@ -1622,7 +1614,7 @@ function openItemModal(itemId = null) {
   document.getElementById('inp-ilocal').checked = !!item.localBuy;
 
   // 수하물 분류 (carry / checked)
-  document.getElementById('inp-ibag').value = item.bag || '';
+  document.getElementById('inp-ibag').value = item.bag === 'carry' ? 'carry' : 'checked';
 
   // 특이 표시 (휴대용 등)
   document.getElementById('inp-iti').value = item.ti || '';
@@ -1700,7 +1692,7 @@ async function saveItemHandler() {
   const tiVal  = document.getElementById('inp-iti').value;
   const ti     = (ttVal && tiVal) ? tiVal : (ttVal ? 'info' : null);
   const tt     = ttVal || null;
-  const bag    = document.getElementById('inp-ibag').value || null;
+  const bag    = document.getElementById('inp-ibag').value === 'carry' ? 'carry' : 'checked';
   if (!label) { alert('항목 이름을 입력해주세요'); return; }
 
   if (editItemId) {
