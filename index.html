@@ -1308,24 +1308,21 @@ document.querySelectorAll('.modal-overlay').forEach(o => {
 });
 
 // ── PWA MANIFEST ───────────────────────
-// "any" 아이콘: 투명 배경 · 가장자리까지 꽉 차게
-// "maskable" 아이콘: 단색 배경 + 중앙 80% 안전 영역에만 콘텐츠 → 크롬 배지 안 붙음
-const SVG_ANY  = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><text x="96" y="148" font-size="150" text-anchor="middle">🧳</text></svg>';
-const SVG_MASK = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect width="192" height="192" fill="#6b5ce7"/><text x="96" y="124" font-size="96" text-anchor="middle">🧳</text></svg>';
-const ICON_ANY  = 'data:image/svg+xml,' + encodeURIComponent(SVG_ANY);
-const ICON_MASK = 'data:image/svg+xml,' + encodeURIComponent(SVG_MASK);
+// 별도 SVG 파일을 사용해 안드로이드 WebAPK 빌드의 안정성 확보.
+// 동일 아이콘에 purpose="any maskable" 둘 다 선언 — 콘텐츠가 중앙 80%
+// 안전 영역 안에 있으므로 maskable 크롭에도 잘리지 않음.
+const ICON_PATH = '/JIMSSAGI/icon.svg';
 
 const mani = JSON.stringify({
   name:'짐싸기', short_name:'짐싸기',
   start_url:'/JIMSSAGI/',
   scope:'/JIMSSAGI/',
   display:'standalone',
-  background_color:'#f7f6f2', theme_color:'#6b5ce7',
+  background_color:'#6b5ce7', theme_color:'#6b5ce7',
   icons:[
-    {src:ICON_ANY,  sizes:'192x192', type:'image/svg+xml', purpose:'any'},
-    {src:ICON_ANY,  sizes:'512x512', type:'image/svg+xml', purpose:'any'},
-    {src:ICON_MASK, sizes:'192x192', type:'image/svg+xml', purpose:'maskable'},
-    {src:ICON_MASK, sizes:'512x512', type:'image/svg+xml', purpose:'maskable'}
+    {src:ICON_PATH, sizes:'192x192', type:'image/svg+xml', purpose:'any maskable'},
+    {src:ICON_PATH, sizes:'512x512', type:'image/svg+xml', purpose:'any maskable'},
+    {src:ICON_PATH, sizes:'any',     type:'image/svg+xml', purpose:'any maskable'}
   ]
 });
 const mLink = document.createElement('link');
@@ -1336,7 +1333,7 @@ document.head.appendChild(mLink);
 // iOS 홈 화면 아이콘
 const apl = document.createElement('link');
 apl.rel = 'apple-touch-icon';
-apl.href = ICON_MASK;
+apl.href = ICON_PATH;
 document.head.appendChild(apl);
 
 // ── SERVICE WORKER (PWA installability) ──
