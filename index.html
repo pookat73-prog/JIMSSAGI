@@ -172,6 +172,10 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .itm-period.empty{background:transparent;color:var(--text-muted);border:1px dashed var(--border);font-weight:400;opacity:.6}
 .itm-period.empty:active{opacity:1;background:var(--bg)}
 
+.itm-decant{display:inline-flex;align-items:center;gap:2px;font-size:10px;padding:1px 6px;border-radius:9px;font-weight:500;cursor:pointer;flex-shrink:0;line-height:1.5;background:var(--info-bg);color:var(--info-text)}
+.itm-decant.empty{background:transparent;color:var(--text-muted);border:1px dashed var(--border);font-weight:400;opacity:.6}
+.itm-decant.empty:active{opacity:1;background:var(--bg)}
+
 /* ── 정기 사용량 인라인 픽커 ── */
 .period-picker{position:absolute;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:6px;display:flex;gap:4px;flex-wrap:wrap;z-index:50;box-shadow:0 6px 18px rgba(0,0,0,.14);max-width:240px}
 .period-picker button{font-family:inherit;font-size:11px;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:5px 9px;cursor:pointer;line-height:1.3;color:var(--text-primary)}
@@ -886,6 +890,17 @@ function renderPackItem(item, nights) {
     periodChip = `<span class="itm-period empty" onclick="event.preventDefault();event.stopPropagation();APP.openPeriodPicker('${item.id}', this)">🔁 정기?</span>`;
   }
 
+  // 소분 토글 칩 — 클릭 한 번으로 켜고 끔. 켜면 패널 자동 펼침.
+  let decantChip = '';
+  if (item.hasMl) {
+    let info = '소분';
+    if (item.pumpsPerDay && item.mlPerPump) info = `${(item.pumpsPerDay*item.mlPerPump).toFixed(1)}ml/일`;
+    else if (item.ml) info = `${item.ml}ml`;
+    decantChip = `<span class="itm-decant" onclick="event.preventDefault();event.stopPropagation();APP.toggleHasMl('${item.id}')" title="탭하여 소분 끄기">💧 ${info}</span>`;
+  } else {
+    decantChip = `<span class="itm-decant empty" onclick="event.preventDefault();event.stopPropagation();APP.toggleHasMl('${item.id}')" title="탭하여 소분 켜기">💧 소분?</span>`;
+  }
+
   // tag
   let tagHtml = '';
   if (item.ti) tagHtml += `<span class="tag tag-${item.ti}">${esc(item.tt||'')}</span>`;
@@ -955,7 +970,7 @@ function renderPackItem(item, nights) {
           onchange="APP.toggleCheck('${item.id}',this.checked)">
         <div class="itm-main">
           <label class="itm-label" for="cb-${item.id}">${esc(item.label)}</label>
-          ${qtyHtml}${tagHtml}${periodChip}
+          ${qtyHtml}${tagHtml}${periodChip}${decantChip}
         </div>
         ${decantBtn}
         <button class="btn-local${isLocal?' on':''}" onclick="APP.toggleLocal('${item.id}')" title="현지구매 전환">🛒</button>
@@ -1309,6 +1324,15 @@ const APP = {
     el.classList.toggle('open');
     if (el.classList.contains('open')) _openDecants.add(itemId);
     else _openDecants.delete(itemId);
+  },
+
+  async toggleHasMl(itemId) {
+    const item = db_data[tripId]?.items?.[itemId];
+    if (!item) return;
+    const newVal = !item.hasMl;
+    if (newVal) _openDecants.add(itemId);
+    else _openDecants.delete(itemId);
+    await dbUpd(`${DB_ROOT}/${tripId}/items/${itemId}`, { hasMl: newVal });
   },
 
   async saveDecant(itemId, mlVal, cmlVal) {
