@@ -143,7 +143,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .icon-btn.on{background:var(--accent-light);color:var(--accent)}
 .btn-save-edit{display:none;font-family:inherit;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:12px;padding:6px 12px;font-weight:500;cursor:pointer}
 .edit-mode .btn-save-edit{display:inline-block}
-.edit-mode #btn-edit-mode{display:none}
+.edit-mode #btn-edit-mode,.edit-mode #btn-categorize{display:none}
 .edit-mode .itm-cb{display:none}
 .edit-mode .btn-local{display:none}
 .edit-mode .btn-decant{display:none}
@@ -160,6 +160,18 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .edit-mode .itm-period{display:inline-flex;align-items:center;gap:3px;font-size:10px;background:var(--ok-bg);color:var(--ok-text);padding:2px 7px;border-radius:9px;font-weight:500;cursor:pointer;flex-shrink:0}
 .edit-mode .itm-period.empty{background:var(--bg);color:var(--text-muted);border:1px dashed var(--border)}
 .itm-period{display:none}
+
+/* ── CATEGORIZE-ONLY MODE (가장 단순한 분류 전용 뷰) ── */
+.categorize-mode .btn-itm-edit,
+.categorize-mode .btn-itm-del,
+.categorize-mode .itm-period,
+.categorize-mode .cat-actions,
+.categorize-mode .cat-handle,
+.categorize-mode .add-cat-btn{display:none!important}
+.categorize-mode .sec-title-row{padding-bottom:8px;justify-content:flex-start}
+.categorize-mode .sec{background:var(--bg);border:1px solid var(--border);border-radius:12px;padding:11px 12px;margin-bottom:11px}
+.categorize-mode .itm{padding:0 11px}
+.categorize-mode .itm-row{padding:11px 0}
 .drag-handle{display:none;color:var(--text-muted);font-size:18px;cursor:grab;padding:0 6px;line-height:1;flex-shrink:0;touch-action:none;user-select:none}
 .edit-mode .drag-handle{display:inline-block}
 .btn-itm-edit,.btn-itm-del{display:none;font-family:inherit;background:none;border:1px solid var(--border);border-radius:6px;font-size:11px;padding:3px 8px;cursor:pointer;color:var(--text-muted);flex-shrink:0;line-height:1.4}
@@ -233,7 +245,8 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       <span class="hd-name" id="hd-name"></span>
       <span class="hd-nights" id="hd-nights"></span>
     </div>
-    <button class="icon-btn" id="btn-edit-mode" title="편집 모드">✏️</button>
+    <button class="icon-btn" id="btn-categorize" title="분류만">📋</button>
+    <button class="icon-btn" id="btn-edit-mode" title="편집">✏️</button>
     <button class="btn-save-edit" id="btn-save-edit">저장</button>
     <button class="icon-btn" id="btn-edit">···</button>
   </header>
@@ -402,7 +415,7 @@ let tripId    = null;  // 현재 보고 있는 트립
 let curTab    = 'pack';
 let editId    = null;  // 모달 편집 중인 트립
 let editItemId= null;  // 모달 편집 중인 항목
-let editMode  = false; // 편집(드래그) 모드
+let editMode  = null;  // null | 'edit' (전체 편집) | 'categorize' (분류만)
 let db_data   = {};    // { [tripId]: { meta, items } }
 let _sortables= [];    // 활성 SortableJS 인스턴스 목록
 let _openDecants = new Set(); // 펼쳐둔 소분 패널 ID — 리렌더 후 복원
@@ -634,9 +647,8 @@ function renderChecklist() {
   updateProgress(items);
 
   const screen = document.getElementById('s-trip');
-  screen.classList.toggle('edit-mode', editMode);
-  document.getElementById('btn-edit-mode').classList.toggle('on', editMode);
-  document.getElementById('btn-edit-mode').textContent = editMode ? '✓' : '✏️';
+  screen.classList.toggle('edit-mode',       !!editMode);
+  screen.classList.toggle('categorize-mode', editMode === 'categorize');
 
   const el = document.getElementById('cl-content');
   if (curTab === 'pack')      el.innerHTML = renderPack(items, data.meta);
@@ -709,7 +721,10 @@ function renderCategory(sectionItems, cat, nights, section) {
 }
 
 function renderEditHint() {
-  return `<div class="edit-hint">⋮⋮ 핸들로 항목·카테고리를 끌어 옮길 수 있어요. 이름·삭제는 카테고리 옆 버튼으로.</div>`;
+  const text = editMode === 'categorize'
+    ? '⋮⋮ 핸들로 항목을 다른 카테고리로 자유롭게 옮기세요. 저장 누르면 그 분류로 픽스돼요.'
+    : '⋮⋮ 핸들로 항목·카테고리를 끌어 옮길 수 있어요. 이름·삭제는 카테고리 옆 버튼으로.';
+  return `<div class="edit-hint">${text}</div>`;
 }
 
 function renderPackItem(item, nights) {
@@ -934,19 +949,21 @@ function initSortables() {
     }));
   });
 
-  // 카테고리 드래그
-  const catList = document.getElementById('cat-list');
-  if (catList) {
-    _sortables.push(new Sortable(catList, {
-      animation: 150,
-      handle: '.cat-handle',
-      ghostClass: 'sortable-ghost',
-      forceFallback: true,
-      fallbackTolerance: 4,
-      delay: 80,
-      delayOnTouchOnly: true,
-      onEnd: onCatSortEnd
-    }));
+  // 카테고리 드래그 — 분류 모드에선 비활성 (카테고리 위치 잠금)
+  if (editMode === 'edit') {
+    const catList = document.getElementById('cat-list');
+    if (catList) {
+      _sortables.push(new Sortable(catList, {
+        animation: 150,
+        handle: '.cat-handle',
+        ghostClass: 'sortable-ghost',
+        forceFallback: true,
+        fallbackTolerance: 4,
+        delay: 80,
+        delayOnTouchOnly: true,
+        onEnd: onCatSortEnd
+      }));
+    }
   }
 }
 
@@ -997,7 +1014,7 @@ const APP = {
   openTrip(id) {
     tripId = id;
     curTab = 'pack';
-    editMode = false;
+    editMode = null;
     const m = db_data[id]?.meta || {};
     document.getElementById('hd-name').textContent    = m.name  || '';
     document.getElementById('hd-nights').textContent  = m.nights ? nightsLabel(m.nights) : '';
@@ -1007,7 +1024,17 @@ const APP = {
   },
 
   toggleEditMode() {
-    editMode = !editMode;
+    editMode = editMode === 'edit' ? null : 'edit';
+    renderChecklist();
+  },
+
+  toggleCategorizeMode() {
+    editMode = editMode === 'categorize' ? null : 'categorize';
+    renderChecklist();
+  },
+
+  exitEditMode() {
+    editMode = null;
     renderChecklist();
   },
 
@@ -1348,8 +1375,9 @@ async function deleteItemFromModal() {
 document.getElementById('btn-new').onclick       = () => openTripModal(null);
 document.getElementById('btn-edit').onclick      = () => openTripModal(tripId);
 document.getElementById('btn-edit-mode').onclick = () => APP.toggleEditMode();
-document.getElementById('btn-save-edit').onclick = () => APP.toggleEditMode();
-document.getElementById('btn-back').onclick      = () => { tripId=null; editMode=false; destroySortables(); showScreen('s-home'); renderHome(); };
+document.getElementById('btn-categorize').onclick= () => APP.toggleCategorizeMode();
+document.getElementById('btn-save-edit').onclick = () => APP.exitEditMode();
+document.getElementById('btn-back').onclick      = () => { tripId=null; editMode=null; destroySortables(); showScreen('s-home'); renderHome(); };
 document.getElementById('btn-save-trip').onclick = saveTripHandler;
 document.getElementById('btn-del-trip').onclick  = deleteTripHandler;
 document.getElementById('m-trip-close').onclick  = closeTripModal;
