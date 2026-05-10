@@ -1308,18 +1308,34 @@ document.querySelectorAll('.modal-overlay').forEach(o => {
 });
 
 // ── PWA MANIFEST ───────────────────────
+// "any" 아이콘: 투명 배경 · 가장자리까지 꽉 차게
+// "maskable" 아이콘: 단색 배경 + 중앙 80% 안전 영역에만 콘텐츠 → 크롬 배지 안 붙음
+const SVG_ANY  = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><text x="96" y="148" font-size="150" text-anchor="middle">🧳</text></svg>';
+const SVG_MASK = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 192 192"><rect width="192" height="192" fill="#6b5ce7"/><text x="96" y="124" font-size="96" text-anchor="middle">🧳</text></svg>';
+const ICON_ANY  = 'data:image/svg+xml,' + encodeURIComponent(SVG_ANY);
+const ICON_MASK = 'data:image/svg+xml,' + encodeURIComponent(SVG_MASK);
+
 const mani = JSON.stringify({
   name:'짐싸기', short_name:'짐싸기',
   start_url:'/JIMSSAGI/',
   scope:'/JIMSSAGI/',
   display:'standalone',
   background_color:'#f7f6f2', theme_color:'#6b5ce7',
-  icons:[{src:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🧳</text></svg>',sizes:'any',type:'image/svg+xml'}]
+  icons:[
+    {src:ICON_ANY,  sizes:'any', type:'image/svg+xml', purpose:'any'},
+    {src:ICON_MASK, sizes:'any', type:'image/svg+xml', purpose:'maskable'}
+  ]
 });
 const mLink = document.createElement('link');
 mLink.rel = 'manifest';
 mLink.href = URL.createObjectURL(new Blob([mani], {type:'application/json'}));
 document.head.appendChild(mLink);
+
+// iOS 홈 화면 아이콘
+const apl = document.createElement('link');
+apl.rel = 'apple-touch-icon';
+apl.href = ICON_MASK;
+document.head.appendChild(apl);
 
 // ── FIREBASE LISTENER + INIT ────────────
 onValue(ref(db, DB_ROOT), snap => {
