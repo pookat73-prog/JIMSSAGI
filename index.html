@@ -383,6 +383,23 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
         <label for="inp-ilocal">🛒 현지에서 구매 (안 챙겨도 됨)</label>
       </div>
 
+      <label>특이 표시 (선택, 예: 휴대용 / 기내 반입)</label>
+      <div class="row-2">
+        <div>
+          <label>색</label>
+          <select id="inp-iti">
+            <option value="">없음</option>
+            <option value="info">파랑</option>
+            <option value="warn">주황</option>
+            <option value="ok">초록</option>
+          </select>
+        </div>
+        <div>
+          <label>표시 텍스트</label>
+          <input type="text" id="inp-itt" placeholder="예: 휴대용">
+        </div>
+      </div>
+
       <div class="cb-row">
         <input type="checkbox" id="inp-ipd-on">
         <label for="inp-ipd-on">정기 사용량 자동 계산 (양말·렌즈 등)</label>
@@ -633,7 +650,7 @@ function makeTemplate(nights) {
       section: sec, checked:false, localBuy:false,
       qty, qtyF:t.f||null,
       perDayEvery:null, perDayCount:null,
-      hasMl:!!(t.ml), ml:null, cml:50,
+      hasMl:!!(t.ml),
       pumpsPerDay:null, mlPerPump:null,
       ti:t.ti||null, tt:t.tt||null,
       ord:i
@@ -793,7 +810,7 @@ function renderCategory(sectionItems, cat, nights, section) {
     ci.filter(i=>(i.sub||'')===sub).forEach(item => {
       html += section === 'pack'
         ? renderPackItem(item, nights)
-        : renderSimpleItem(item);
+        : renderSimpleItem(item, nights);
     });
   });
   html += `</div></div>`;
@@ -885,13 +902,20 @@ function renderPackItem(item, nights) {
     }
   }
 
-  // 정기 설정 칩 — 설정값 표시, 탭 시 인라인 픽커
+  // 정기 설정 칩 — 여행 일수 알면 "총 N개" 표시, 모르면 주기 설명
   let periodChip = '';
   if (item.perDayEvery && item.perDayCount) {
-    const lbl = item.perDayEvery === 1
+    const subtitle = item.perDayEvery === 1
       ? `하루 ${item.perDayCount}개`
       : `${item.perDayEvery}일에 ${item.perDayCount}개`;
-    periodChip = `<span class="itm-period" onclick="event.preventDefault();event.stopPropagation();APP.openPeriodPicker('${item.id}', this)">🔁 ${lbl}</span>`;
+    let lbl;
+    if (nights > 0) {
+      const total = calcQtyPeriodic(item.perDayEvery, item.perDayCount, nights);
+      lbl = `${total}개 필요`;
+    } else {
+      lbl = subtitle;
+    }
+    periodChip = `<span class="itm-period" title="${subtitle}" onclick="event.preventDefault();event.stopPropagation();APP.openPeriodPicker('${item.id}', this)">🔁 ${lbl}</span>`;
   } else {
     periodChip = `<span class="itm-period empty" onclick="event.preventDefault();event.stopPropagation();APP.openPeriodPicker('${item.id}', this)">🔁 정기?</span>`;
   }
@@ -899,10 +923,8 @@ function renderPackItem(item, nights) {
   // 소분 토글 칩 — 클릭 한 번으로 켜고 끔. 켜면 패널 자동 펼침.
   let decantChip = '';
   if (item.hasMl) {
-    let info = '소분';
     const pumpMl = calcPumpMl(item.pumpsPerDay, item.mlPerPump, nights);
-    if (pumpMl != null) info = `${pumpMl}ml 필요`;
-    else if (item.ml) info = `${item.ml}ml`;
+    const info = pumpMl != null ? `${pumpMl}ml 필요` : '소분';
     decantChip = `<span class="itm-decant" onclick="event.preventDefault();event.stopPropagation();APP.toggleHasMl('${item.id}')" title="탭하여 소분 끄기">💧 ${info}</span>`;
   } else {
     decantChip = `<span class="itm-decant empty" onclick="event.preventDefault();event.stopPropagation();APP.toggleHasMl('${item.id}')" title="탭하여 소분 켜기">💧 소분?</span>`;
@@ -913,21 +935,18 @@ function renderPackItem(item, nights) {
   if (item.ti) tagHtml += `<span class="tag tag-${item.ti}">${esc(item.tt||'')}</span>`;
   if (isLocal)  tagHtml += `<span class="tag tag-local">🛒 현지</span>`;
 
-  // decant
+  // decant — 펌프 사용량 입력 → 여행 총 필요 ml 계산
   let decantBtn = '', decantPanel = '';
   if (item.hasMl) {
     const pumpMl = calcPumpMl(item.pumpsPerDay, item.mlPerPump, nights);
-    const effectiveMl = item.ml || pumpMl;
-    const hasVal = effectiveMl && effectiveMl > 0;
-    const needed = hasVal ? calcDecant(effectiveMl, item.cml||50) : null;
-    decantBtn = `<button class="btn-decant${hasVal?' has-val':''}" onclick="APP.toggleDecant('${item.id}')">소분</button>`;
     const hasPump = item.pumpsPerDay && item.mlPerPump;
     const mlp = item.mlPerPump || 0;
     const sizeChip = (val, label) =>
       `<button type="button" class="pump-chip${Math.abs(mlp-val)<0.01?' on':''}" onclick="APP.setPumpSize('${item.id}',${val})">${label}</button>`;
-    const pumpRow = `
-        <div class="dp-divider"></div>
-        <div class="dp-section-label">펌프 기반 자동 계산${hasPump?'':' (선택)'}</div>
+    decantBtn = `<button class="btn-decant${hasPump?' has-val':''}" onclick="APP.toggleDecant('${item.id}')">소분</button>`;
+    decantPanel = `
+      <div class="decant-panel" id="dp-${item.id}">
+        <div class="dp-section-label">펌프 사이즈</div>
         <div class="pump-chips">
           ${sizeChip(0.6,'소 0.6ml')}
           ${sizeChip(1.25,'중 1~1.5ml')}
@@ -944,27 +963,6 @@ function renderPackItem(item, nights) {
             onchange="APP.savePumpField('${item.id}')">
         </div>
         ${hasPump ? `<div class="dp-result calc">≈ ${pumpMl} ml 필요 (${nights+1}일)</div>` : ''}
-        ${(hasPump && !item.ml) ? `<button class="dp-apply" onclick="APP.applyPumpMl('${item.id}')">필요량 적용</button>` : ''}
-      `;
-    decantPanel = `
-      <div class="decant-panel" id="dp-${item.id}">
-        <div class="dp-group">
-          <label>원본 용량 (ml)</label>
-          <input type="number" min="0" max="9999" placeholder="예: 150"
-            value="${item.ml||''}"
-            onchange="APP.saveDecant('${item.id}',this.value,document.getElementById('dc-${item.id}').value)">
-        </div>
-        <div class="dp-group">
-          <label>용기 사이즈</label>
-          <select id="dc-${item.id}"
-            onchange="APP.saveDecant('${item.id}',this.parentElement.previousElementSibling.querySelector('input').value,this.value)">
-            <option value="30" ${(item.cml||50)==30?'selected':''}>30ml</option>
-            <option value="50" ${(item.cml||50)==50?'selected':''}>50ml</option>
-            <option value="100" ${(item.cml||50)==100?'selected':''}>100ml</option>
-          </select>
-        </div>
-        ${needed ? `<div class="dp-result" id="dpr-${item.id}">용기 ${needed}개 필요</div>` : `<div class="dp-result" id="dpr-${item.id}" style="display:none"></div>`}
-        ${pumpRow}
       </div>`;
   }
 
@@ -987,15 +985,18 @@ function renderPackItem(item, nights) {
     </div>`;
 }
 
-function renderSimpleItem(item) {
+function renderSimpleItem(item, nights = 0) {
   let periodChip = '';
   if (item.perDayEvery && item.perDayCount) {
-    const lbl = item.perDayEvery === 1
+    const subtitle = item.perDayEvery === 1
       ? `하루 ${item.perDayCount}개`
       : `${item.perDayEvery}일에 ${item.perDayCount}개`;
-    periodChip = `<span class="itm-period" onclick="APP.editItem('${item.id}')">🔁 ${lbl}</span>`;
+    const lbl = nights > 0
+      ? `${calcQtyPeriodic(item.perDayEvery, item.perDayCount, nights)}개 필요`
+      : subtitle;
+    periodChip = `<span class="itm-period" title="${subtitle}" onclick="event.preventDefault();event.stopPropagation();APP.openPeriodPicker('${item.id}', this)">🔁 ${lbl}</span>`;
   } else {
-    periodChip = `<span class="itm-period empty" onclick="APP.editItem('${item.id}')">🔁 정기?</span>`;
+    periodChip = `<span class="itm-period empty" onclick="event.preventDefault();event.stopPropagation();APP.openPeriodPicker('${item.id}', this)">🔁 정기?</span>`;
   }
   return `
     <div class="itm ${item.checked?'done':''}" id="itm-${item.id}" data-id="${item.id}">
@@ -1025,7 +1026,7 @@ function renderSimple(items, meta, section) {
   const cats = getCatOrder(items, section, meta);
   html += `<div id="cat-list" data-section="${esc(section)}">`;
   cats.forEach(cat => {
-    html += renderCategory(si, cat, 0, section);
+    html += renderCategory(si, cat, meta?.nights || 0, section);
   });
   html += `</div>`;
   html += `<button class="add-cat-btn" data-section="${esc(section)}">＋ 새 카테고리</button>`;
@@ -1057,7 +1058,7 @@ function renderLocal(items, meta) {
     if (!editMode) html += `<div class="sec"><div class="sec-title">기본 현지 구매 목록</div>`;
     if (editMode) {
       html += `<div id="cat-list" data-section="local">`;
-      cats.forEach(cat => { html += renderCategory(localOnly, cat, 0, 'local'); });
+      cats.forEach(cat => { html += renderCategory(localOnly, cat, meta?.nights || 0, 'local'); });
       html += `</div>`;
       html += `<button class="add-cat-btn" data-section="local">＋ 새 카테고리</button>`;
     } else {
@@ -1341,24 +1342,6 @@ const APP = {
     await dbUpd(`${DB_ROOT}/${tripId}/items/${itemId}`, { hasMl: newVal });
   },
 
-  async saveDecant(itemId, mlVal, cmlVal) {
-    const ml  = parseFloat(mlVal) || null;
-    const cml = parseInt(cmlVal) || 50;
-    await dbUpd(`${DB_ROOT}/${tripId}/items/${itemId}`, { ml, cml });
-    const item   = { ...(db_data[tripId]?.items?.[itemId]||{}), ml, cml };
-    const nights = db_data[tripId]?.meta?.nights || 0;
-    const pumpMl = calcPumpMl(item.pumpsPerDay, item.mlPerPump, nights);
-    const eff    = ml || pumpMl;
-    const needed = eff ? calcDecant(eff, cml) : null;
-    const resEl  = document.getElementById('dpr-'+itemId);
-    if (resEl) {
-      resEl.textContent   = needed ? `용기 ${needed}개 필요` : '';
-      resEl.style.display = needed ? '' : 'none';
-    }
-    const btn = document.querySelector(`#itm-${itemId} .btn-decant`);
-    if (btn) btn.classList.toggle('has-val', !!eff);
-  },
-
   async savePump(itemId, ppdVal, mlpVal) {
     const pumpsPerDay = parseFloat(ppdVal) || null;
     const mlPerPump   = parseFloat(mlpVal) || null;
@@ -1377,15 +1360,6 @@ const APP = {
     const ppd = document.getElementById('ppd-'+itemId)?.value;
     await APP.savePump(itemId, ppd, mlp);
     renderChecklist();
-  },
-
-  async applyPumpMl(itemId) {
-    const item   = db_data[tripId]?.items?.[itemId];
-    const nights = db_data[tripId]?.meta?.nights || 0;
-    if (!item) return;
-    const ml = calcPumpMl(item.pumpsPerDay, item.mlPerPump, nights);
-    if (!ml) return;
-    await dbUpd(`${DB_ROOT}/${tripId}/items/${itemId}`, { ml });
   },
 
   editItem(itemId) {
@@ -1553,6 +1527,10 @@ function openItemModal(itemId = null) {
   // 현지 구매
   document.getElementById('inp-ilocal').checked = !!item.localBuy;
 
+  // 특이 표시 (휴대용 등)
+  document.getElementById('inp-iti').value = item.ti || '';
+  document.getElementById('inp-itt').value = item.tt || '';
+
   // 정기 사용량
   const pdOn = !!(item.perDayEvery && item.perDayCount);
   document.getElementById('inp-ipd-on').checked = pdOn;
@@ -1621,6 +1599,10 @@ async function saveItemHandler() {
   const pdCount= pdOn ? (parseInt(document.getElementById('inp-ipd-count').value) || null) : null;
   const ppd    = hasMl ? (parseFloat(document.getElementById('inp-ipump-pd').value) || null) : null;
   const mlp    = hasMl ? (parseFloat(document.getElementById('inp-ipump-mlp').value) || null) : null;
+  const ttVal  = document.getElementById('inp-itt').value.trim();
+  const tiVal  = document.getElementById('inp-iti').value;
+  const ti     = (ttVal && tiVal) ? tiVal : (ttVal ? 'info' : null);
+  const tt     = ttVal || null;
   if (!label) { alert('항목 이름을 입력해주세요'); return; }
 
   if (editItemId) {
@@ -1631,10 +1613,11 @@ async function saveItemHandler() {
       perDayEvery: pdEvery, perDayCount: pdCount,
       hasMl,
       pumpsPerDay: ppd, mlPerPump: mlp,
+      ti, tt,
       // 현지구매로 새로 전환되면 체크 해제
       ...(becameLocal ? { checked:false } : {}),
-      // 소분 끄면 ml/cml/펌프 초기화
-      ...(hasMl ? {} : { ml:null, pumpsPerDay:null, mlPerPump:null })
+      // 소분 끄면 펌프 초기화
+      ...(hasMl ? {} : { pumpsPerDay:null, mlPerPump:null })
     });
     closeItemModal();
     return;
@@ -1647,9 +1630,9 @@ async function saveItemHandler() {
     checked:false, localBuy,
     qty:null, qtyF:null,
     perDayEvery: pdEvery, perDayCount: pdCount,
-    hasMl, ml:null, cml:50,
+    hasMl,
     pumpsPerDay: ppd, mlPerPump: mlp,
-    ti:null, tt:null, ord: existCount
+    ti, tt, ord: existCount
   });
   closeItemModal();
 }
