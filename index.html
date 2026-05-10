@@ -184,6 +184,12 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .bag-chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
 .bag-chip-n{font-size:10px;background:rgba(0,0,0,.08);padding:1px 5px;border-radius:8px;font-weight:500}
 .bag-chip.on .bag-chip-n{background:rgba(255,255,255,.25);color:#fff}
+.bag-chip-decant{margin-left:auto}
+.bag-chip-decant.on{background:#1a5fb4;border-color:#1a5fb4}
+
+.decant-summary{background:var(--info-bg);color:var(--info-text);border:1px solid #b8d3f0;border-radius:10px;padding:9px 13px;margin:0 0 8px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
+.decant-summary b{font-weight:600}
+.decant-summary .ds-miss{color:var(--danger);font-size:11px;font-weight:400}
 
 .itm-bag{display:inline-flex;align-items:center;gap:2px;font-size:10px;padding:1px 6px;border-radius:9px;font-weight:500;cursor:pointer;flex-shrink:0;line-height:1.5}
 .itm-bag.carry{background:var(--info-bg);color:var(--info-text)}
@@ -528,6 +534,7 @@ let _expandedPouches = new Set(); // 분류 모드에서 펼쳐둔 주머니 —
 let _floorCollapsed = false;      // 분류 모드: 바닥 접힘 여부
 let _expandedDecants = new Set(); // 펼쳐둔 소분 패널 (UI 전용, 시작 시 항상 접힘)
 let _bagFilter = ''; // '' | 'carry' | 'checked' — 짐 목록 탭 기내/위탁 필터
+let _decantOnly = false; // true면 소분(hasMl) 항목만 보기
 
 // ── HELPERS ────────────────────────────
 const esc = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -801,24 +808,42 @@ function renderPack(items, meta) {
   const carryN  = allPack.filter(i => i.bag === 'carry').length;
   const checkedN= allPack.filter(i => i.bag === 'checked').length;
   const noneN   = allPack.length - carryN - checkedN;
+  const decantItems = allPack.filter(i => i.hasMl);
+  const decantN = decantItems.length;
 
-  // 필터 적용 ('none' = 분류 미정)
-  const pack = !_bagFilter
-    ? allPack
-    : _bagFilter === 'none'
-      ? allPack.filter(i => !i.bag)
-      : allPack.filter(i => i.bag === _bagFilter);
+  // 필터 적용: bag + 소분 (AND)
+  let pack = allPack;
+  if (_bagFilter === 'none') pack = pack.filter(i => !i.bag);
+  else if (_bagFilter)        pack = pack.filter(i => i.bag === _bagFilter);
+  if (_decantOnly)             pack = pack.filter(i => i.hasMl);
+
   const cats = getCatOrder(items, 'pack', meta)
     .filter(c => pack.some(i => (i.cat||'기타') === c));
 
   const chip = (val, lbl, n) =>
     `<button class="bag-chip${_bagFilter===val?' on':''}" onclick="APP.setBagFilter('${val}')">${lbl}${n!=null?` <span class="bag-chip-n">${n}</span>`:''}</button>`;
+  const decantBtn = `<button class="bag-chip bag-chip-decant${_decantOnly?' on':''}" onclick="APP.toggleDecantOnly()">💧 소분만 <span class="bag-chip-n">${decantN}</span></button>`;
   let html = `<div class="bag-filter">
     ${chip('', '전체', allPack.length)}
     ${chip('carry', '🛄 기내', carryN)}
     ${chip('checked', '🧳 위탁', checkedN)}
     ${noneN > 0 ? chip('none', '미정', noneN) : ''}
+    ${decantN > 0 ? decantBtn : ''}
   </div>`;
+
+  // 소분 요약 — 필터 켰을 때만 표시
+  if (_decantOnly && decantN > 0) {
+    const totalMl = decantItems.reduce((s, i) => {
+      const v = calcPumpMl(i.pumpsPerDay, i.mlPerPump, nights);
+      return s + (v || 0);
+    }, 0);
+    const filledN = decantItems.filter(i => calcPumpMl(i.pumpsPerDay, i.mlPerPump, nights) != null).length;
+    const missingN = decantN - filledN;
+    const totalLbl = totalMl > 0 ? ` · 총 ${(+totalMl.toFixed(1))} ml 필요` : '';
+    const missLbl  = missingN > 0 ? ` <span class="ds-miss">(펌프 미입력 ${missingN})</span>` : '';
+    html += `<div class="decant-summary">💧 소분 용기 <b>${decantN}개</b>${totalLbl}${missLbl}</div>`;
+  }
+
   html += `<div class="notice notice-warn">노트북 기내 반입 시 캐리어 위탁 수하물 자동 확정 · 액체류 100ml 초과 제품은 위탁 분류</div>`;
   html += renderEditHint();
   html += `<div id="cat-list" data-section="pack">`;
@@ -1221,6 +1246,7 @@ const APP = {
     editMode = null;
     _expandedDecants.clear();
     _bagFilter = '';
+    _decantOnly = false;
     const m = db_data[id]?.meta || {};
     document.getElementById('hd-name').textContent    = m.name  || '';
     document.getElementById('hd-nights').textContent  = m.nights ? nightsLabel(m.nights) : '';
@@ -1372,6 +1398,11 @@ const APP = {
 
   setBagFilter(val) {
     _bagFilter = val || '';
+    renderChecklist();
+  },
+
+  toggleDecantOnly() {
+    _decantOnly = !_decantOnly;
     renderChecklist();
   },
 
