@@ -93,6 +93,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .itm-main{flex:1;display:flex;align-items:center;gap:5px;flex-wrap:wrap;min-width:0}
 .itm-label{font-size:14px;flex:1;min-width:0}
 .itm.done .itm-label{text-decoration:line-through;color:var(--text-muted)}
+.itm.done .itm-qty,.itm.done .itm-period,.itm.done .itm-bag,.itm.done .itm-decant,.itm.done .tag{opacity:.4}
 .itm.is-local .itm-label{color:var(--text-muted)}
 .itm-qty{font-size:11px;background:var(--accent-light);color:var(--accent);padding:1px 7px;border-radius:10px;font-weight:500;white-space:nowrap}
 .itm.is-local .itm-qty{background:var(--local-bg);color:var(--local-text)}
@@ -168,6 +169,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .edit-mode .itm-row{padding:11px 0;gap:8px}
 .edit-mode .itm.is-local .itm-label{color:var(--text-primary)}
 .edit-mode .itm.done .itm-label{text-decoration:none;color:var(--text-primary)}
+.edit-mode .itm.done .itm-qty,.edit-mode .itm.done .itm-period,.edit-mode .itm.done .itm-bag,.edit-mode .itm.done .itm-decant,.edit-mode .itm.done .tag{opacity:1}
 .edit-mode .cat-items{min-height:14px;padding:2px 0 4px}
 .edit-mode .sec{background:var(--bg);border-color:var(--border-soft)}
 .edit-mode .sec-title-row{padding-bottom:8px}
@@ -377,6 +379,10 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
         </div>
       </div>
       <div class="nights-chip" id="nights-chip" style="display:none" id="nights-chip"></div>
+      <div class="cb-row" id="row-blank" style="margin-top:12px">
+        <input type="checkbox" id="inp-blank">
+        <label for="inp-blank">📝 빈 목록으로 시작 (기본 짐 템플릿 없이)</label>
+      </div>
     </div>
     <div class="modal-ft">
       <button class="btn-danger" id="btn-del-trip" style="display:none">삭제</button>
@@ -1537,6 +1543,8 @@ function openTripModal(id = null) {
   document.getElementById('inp-dest').value  = m.dest  || '';
   document.getElementById('inp-start').value = m.start || '';
   document.getElementById('inp-end').value   = m.end   || '';
+  document.getElementById('inp-blank').checked = false;
+  document.getElementById('row-blank').style.display = isEdit ? 'none' : 'flex';
   updateNightsChip();
   document.getElementById('m-trip').style.display = 'flex';
 }
@@ -1580,9 +1588,10 @@ async function saveTripHandler() {
     closeTripModal();
   } else {
     // Create
-    const id   = 'trip_' + Date.now();
-    const meta = { name, dest, start, end, nights, ca: Date.now() };
-    const items = makeTemplate(nights);
+    const id    = 'trip_' + Date.now();
+    const blank = document.getElementById('inp-blank').checked;
+    const meta  = { name, dest, start, end, nights, ca: Date.now() };
+    const items = blank ? {} : makeTemplate(nights);
     await dbSet(`${DB_ROOT}/${id}`, { meta, items });
     closeTripModal();
     APP.openTrip(id);
