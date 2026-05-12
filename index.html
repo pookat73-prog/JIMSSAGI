@@ -408,7 +408,6 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       <select id="inp-itab">
         <option value="pack">짐 목록</option>
         <option value="todo">출발 전 할 일</option>
-        <option value="local">현지 구매</option>
         <option value="recommend">추천</option>
       </select>
 
@@ -420,7 +419,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 
       <div class="cb-row">
         <input type="checkbox" id="inp-ilocal">
-        <label for="inp-ilocal">🛒 현지에서 구매 (안 챙겨도 됨)</label>
+        <label for="inp-ilocal">🛒 현지에서 구매 (체크하면 현지 구매 탭으로 분류)</label>
       </div>
 
       <label>특이 표시 (선택, 예: 휴대용 / 기내 반입)</label>
@@ -670,12 +669,12 @@ function makeTemplate(nights) {
     {l:'일본 체크카드 사용 등록',   c:'출발 전', s:'todo'},
     {l:'환전 (엔화)',               c:'출발 전', s:'todo'},
     // ── local ──
-    {l:'치약·칫솔',                 c:'현지 구매', s:'local'},
-    {l:'샴푸·트리트먼트·컬크림',   c:'현지 구매', s:'local'},
-    {l:'클렌징크림·클렌징폼',       c:'현지 구매', s:'local'},
-    {l:'바디워시·세면밴드',         c:'현지 구매', s:'local'},
-    {l:'렌즈 세정제',               c:'현지 구매', s:'local'},
-    {l:'교통카드 (Welcome Suica)',   c:'현지 구매', s:'local', ti:'info', tt:'보증금 없음·28일'},
+    {l:'치약·칫솔',                 c:'현지 구매', s:'pack', lb:true},
+    {l:'샴푸·트리트먼트·컬크림',   c:'현지 구매', s:'pack', lb:true},
+    {l:'클렌징크림·클렌징폼',       c:'현지 구매', s:'pack', lb:true},
+    {l:'바디워시·세면밴드',         c:'현지 구매', s:'pack', lb:true},
+    {l:'렌즈 세정제',               c:'현지 구매', s:'pack', lb:true},
+    {l:'교통카드 (Welcome Suica)',   c:'현지 구매', s:'pack', lb:true, ti:'info', tt:'보증금 없음·28일'},
     // ── recommend ──
     {l:'얇은 겉옷 (카디건·바람막이)',c:'추천', s:'recommend'},
     {l:'상비약 (진통제·소화제·밴드)',c:'추천', s:'recommend'},
@@ -689,7 +688,7 @@ function makeTemplate(nights) {
     const qty = (t.f && nights > 0) ? calcQty(t.f, nights) : null;
     out[id] = {
       id, label:t.l, cat:t.c, sub:t.sub||null,
-      section: sec, checked:false, localBuy:false,
+      section: sec, checked:false, localBuy:!!t.lb,
       qty, qtyF:t.f||null,
       perDayEvery:null, perDayCount:null,
       hasMl:!!(t.ml),
@@ -1108,51 +1107,49 @@ function renderSimple(items, meta, section) {
 }
 
 function renderLocal(items, meta) {
-  const fromPack  = items.filter(i => i.section==='pack' && i.localBuy);
-  const localOnly = items.filter(i => i.section==='local');
+  // 현지에서 살 항목 = pack+localBuy(신규 흐름) 또는 레거시 section='local'
+  const localItems = items
+    .filter(i => (i.section==='pack' && i.localBuy) || i.section==='local')
+    .sort((a,b)=>(a.ord||0)-(b.ord||0));
 
-  let html = `<div class="notice notice-info">현지에서 구매 예정인 항목이에요. 따로 챙기지 않아도 돼요.</div>`;
+  let html = `<div class="notice notice-info">짐 목록에서 🛒로 표시한 항목이 여기 모여요. 따로 챙기지 않아도 돼요.</div>`;
   html += renderEditHint();
 
-  if (fromPack.length && !editMode) {
-    html += `<div class="sec"><div class="sec-title">짐 목록에서 이동됨</div>`;
-    fromPack.forEach(item => {
-      html += `<div class="local-row">
-        <span>🛒</span>
-        <span class="local-label">${esc(item.label)}</span>
-        <button class="btn-inline-edit" onclick="APP.editItem('${item.id}')" title="수정">✎</button>
-        <button class="revert-btn" onclick="APP.toggleLocal('${item.id}')">되돌리기</button>
-      </div>`;
-    });
-    html += `</div>`;
-  }
-
-  // 편집 모드: local 섹션 항목들도 카테고리/드래그 가능
-  const cats = getCatOrder(items, 'local', meta);
-  if (cats.length || editMode) {
-    if (!editMode) html += `<div class="sec"><div class="sec-title">기본 현지 구매 목록</div>`;
-    if (editMode) {
+  if (editMode) {
+    // 편집 모드: 레거시 local 섹션 카테고리도 그대로 보이도록 유지
+    const cats = getCatOrder(items, 'local', meta);
+    const legacyOnly = localItems.filter(i => i.section==='local');
+    if (cats.length || legacyOnly.length) {
       html += `<div id="cat-list" data-section="local">`;
-      cats.forEach(cat => { html += renderCategory(localOnly, cat, meta?.nights || 0, 'local'); });
+      cats.forEach(cat => { html += renderCategory(legacyOnly, cat, meta?.nights || 0, 'local'); });
       html += `</div>`;
       html += `<button class="add-cat-btn" data-section="local">＋ 새 카테고리</button>`;
-    } else {
-      localOnly.forEach(item => {
-        html += `<div class="local-row">
-          <span style="color:var(--text-muted)">·</span>
-          <span class="local-label">${esc(item.label)}</span>
-          ${item.ti?`<span class="tag tag-${item.ti}">${esc(item.tt||'')}</span>`:''}
-          <button class="btn-inline-edit" onclick="APP.editItem('${item.id}')" title="수정">✎</button>
-          <button class="btn-local-del" onclick="APP.deleteItem('${item.id}')" title="삭제">×</button>
-        </div>`;
-      });
-      html += `</div>`;
     }
+    // 신규 흐름 항목은 짐 목록 탭에서 편집 — 안내만
+    const newFlow = localItems.filter(i => i.section==='pack');
+    if (newFlow.length) {
+      html += `<div class="sec"><div class="sec-title">짐 목록에서 분류된 ${newFlow.length}개</div>
+        <div style="padding:8px;color:var(--text-muted);font-size:12px">짐 목록 탭에서 편집하세요</div></div>`;
+    }
+    return html;
   }
 
-  if (!fromPack.length && !localOnly.length && !editMode) {
+  if (!localItems.length) {
     html += `<div style="padding:2rem;text-align:center;color:var(--text-muted)">항목이 없어요</div>`;
+    return html;
   }
+
+  html += `<div class="sec">`;
+  localItems.forEach(item => {
+    html += `<div class="local-row">
+      <span>🛒</span>
+      <span class="local-label">${esc(item.label)}</span>
+      ${item.ti?`<span class="tag tag-${item.ti}">${esc(item.tt||'')}</span>`:''}
+      <button class="btn-inline-edit" onclick="APP.editItem('${item.id}')" title="수정">✎</button>
+      <button class="revert-btn" onclick="APP.toggleLocal('${item.id}')">짐으로 되돌리기</button>
+    </div>`;
+  });
+  html += `</div>`;
   return html;
 }
 
@@ -1247,6 +1244,21 @@ async function onCatSortEnd(evt) {
   await dbUpd(`${DB_ROOT}/${tripId}/meta`, { catOrder });
 }
 
+// 레거시 section='local' 항목을 한 번에 section='pack' + localBuy=true로 이전
+async function maybeMigrateLegacyLocal(id) {
+  const data = db_data[id];
+  if (!data || !data.items || data.meta?.localMigrated) return;
+  const legacy = Object.values(data.items).filter(i => i.section === 'local');
+  if (!legacy.length) return;
+  const updates = {};
+  legacy.forEach(item => {
+    updates[`items/${item.id}/section`]  = 'pack';
+    updates[`items/${item.id}/localBuy`] = true;
+  });
+  updates['meta/localMigrated'] = true;
+  try { await dbUpd(`${DB_ROOT}/${id}`, updates); } catch(e) { console.error('local migrate fail', e); }
+}
+
 // ── GLOBAL ACTIONS ─────────────────────
 const APP = {
   openTrip(id) {
@@ -1262,6 +1274,7 @@ const APP = {
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.tab==='pack'));
     showScreen('s-trip');
     renderChecklist();
+    maybeMigrateLegacyLocal(id);
   },
 
   toggleEditMode() {
@@ -1402,6 +1415,11 @@ const APP = {
   async toggleLocal(itemId) {
     const item = db_data[tripId]?.items?.[itemId];
     if (!item) return;
+    // 레거시 section='local' 항목은 짐 목록(pack)으로 이전하면서 localBuy 해제
+    if (item.section === 'local') {
+      await dbUpd(`${DB_ROOT}/${tripId}/items/${itemId}`, { section:'pack', localBuy:false, checked:false });
+      return;
+    }
     await dbUpd(`${DB_ROOT}/${tripId}/items/${itemId}`, { localBuy: !item.localBuy, checked: false });
   },
 
@@ -1621,7 +1639,12 @@ function openItemModal(itemId = null) {
 
   document.getElementById('inp-ilabel').value = item.label || '';
   document.getElementById('inp-icat').value   = item.cat   || '';
-  document.getElementById('inp-itab').value   = item.section || (curTab==='local'?'local':curTab==='todo'?'todo':curTab==='recommend'?'recommend':'pack');
+
+  // 레거시 section='local' 항목은 짐 목록 + 현지구매 체크로 정규화해서 표시
+  const isLegacyLocal = item.section === 'local';
+  const rawSection = item.section || (curTab==='todo'?'todo':curTab==='recommend'?'recommend':'pack');
+  const effectiveSection = (rawSection === 'local') ? 'pack' : rawSection;
+  document.getElementById('inp-itab').value = effectiveSection;
 
   // 카테고리 자동완성 채우기
   const dl = document.getElementById('cat-suggest');
@@ -1629,8 +1652,9 @@ function openItemModal(itemId = null) {
   Object.values(db_data[tripId]?.items||{}).forEach(i => { if (i.cat) cats.add(i.cat); });
   dl.innerHTML = [...cats].map(c => `<option value="${esc(c)}">`).join('');
 
-  // 현지 구매
-  document.getElementById('inp-ilocal').checked = !!item.localBuy;
+  // 현지 구매 — 레거시 local 섹션이거나 현지구매 탭에서 새로 추가하는 경우 자동 체크
+  const isNewOnLocalTab = !isEdit && curTab === 'local';
+  document.getElementById('inp-ilocal').checked = !!item.localBuy || isLegacyLocal || isNewOnLocalTab;
 
   // 수하물 분류 (carry / checked)
   document.getElementById('inp-ibag').value = item.bag === 'carry' ? 'carry' : 'checked';
@@ -1699,9 +1723,11 @@ function updatePumpPreview() {
 async function saveItemHandler() {
   const label  = document.getElementById('inp-ilabel').value.trim();
   const cat    = document.getElementById('inp-icat').value.trim() || '기타';
-  const section= document.getElementById('inp-itab').value;
+  const tabVal = document.getElementById('inp-itab').value;
   const hasMl  = document.getElementById('inp-iml').checked;
   const localBuy = document.getElementById('inp-ilocal').checked;
+  // 현지구매면 무조건 짐 목록(pack) 섹션으로 — 현지 구매 탭은 pack+localBuy로만 채워짐
+  const section = localBuy ? 'pack' : tabVal;
   const pdOn   = document.getElementById('inp-ipd-on').checked;
   const pdEvery= pdOn ? (parseInt(document.getElementById('inp-ipd-every').value) || null) : null;
   const pdCount= pdOn ? (parseInt(document.getElementById('inp-ipd-count').value) || null) : null;
@@ -1782,6 +1808,10 @@ document.getElementById('inp-ipd-count').addEventListener('input', updatePdPrevi
 document.getElementById('inp-iml').addEventListener('change', e => {
   document.getElementById('inp-ipump-box').style.display = e.target.checked ? 'flex' : 'none';
   updatePumpPreview();
+});
+// 현지구매 체크 시 탭을 짐 목록으로 강제 — 두 입력 사이 충돌 방지
+document.getElementById('inp-ilocal').addEventListener('change', e => {
+  if (e.target.checked) document.getElementById('inp-itab').value = 'pack';
 });
 document.getElementById('inp-ipump-pd').addEventListener('input', updatePumpPreview);
 document.getElementById('inp-ipump-mlp').addEventListener('input', () => { updatePumpPreview(); refreshPumpChipState(); });
