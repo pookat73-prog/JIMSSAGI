@@ -234,7 +234,7 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
         <option value="local">현지 구매</option>
         <option value="recommend">추천</option>
       </select>
-      <div class="cb-row">
+      <div class="cb-row" id="ml-row">
         <input type="checkbox" id="inp-iml">
         <label for="inp-iml">화장품 소분 계산기 추가</label>
       </div>
@@ -578,6 +578,7 @@ function renderSimple(items, section) {
               <label class="itm-label" for="cb-${item.id}">${esc(item.label)}</label>
               ${item.ti?`<span class="tag tag-${item.ti}">${esc(item.tt||'')}</span>`:''}
             </div>
+            <button class="btn-local" onclick="APP.editItem('${item.id}')" title="수정">✏️</button>
           </div>
         </div>`).join('')}
     </div>`;
@@ -754,6 +755,8 @@ function openAddModal(item = null) {
   document.getElementById('inp-icat').value   = item ? (item.cat||'') : '';
   document.getElementById('inp-itab').value   = item ? item.section : (curTab==='local'?'local':curTab==='todo'?'todo':curTab==='recommend'?'recommend':'pack');
   document.getElementById('inp-iml').checked  = item ? !!item.hasMl : false;
+  const isPack = document.getElementById('inp-itab').value === 'pack';
+  document.getElementById('ml-row').style.display = isPack ? '' : 'none';
   document.getElementById('m-item').style.display = 'flex';
 }
 
@@ -796,6 +799,9 @@ document.getElementById('btn-save-item').onclick = saveItemHandler;
 document.getElementById('m-item-close').onclick  = closeAddModal;
 document.getElementById('inp-start').addEventListener('change', updateNightsChip);
 document.getElementById('inp-end').addEventListener('change', updateNightsChip);
+document.getElementById('inp-itab').addEventListener('change', function() {
+  document.getElementById('ml-row').style.display = this.value === 'pack' ? '' : 'none';
+});
 
 document.querySelectorAll('.tab').forEach(t => {
   t.onclick = function() {
