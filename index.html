@@ -280,6 +280,7 @@ try {
 let tripId  = null;  // 현재 보고 있는 트립
 let curTab  = 'pack';
 let editId  = null;  // 모달 편집 중인 트립
+let editItemId = null; // 아이템 편집 중
 let db_data = {};    // { [tripId]: { meta, items } }
 
 // ── HELPERS ────────────────────────────
@@ -554,6 +555,7 @@ function renderPackItem(item, nights) {
         </div>
         ${decantBtn}
         <button class="btn-local${isLocal?' on':''}" onclick="APP.toggleLocal('${item.id}')" title="현지구매 전환">🛒</button>
+        <button class="btn-local" onclick="APP.editItem('${item.id}')" title="수정">✏️</button>
       </div>
       ${decantPanel}
     </div>`;
@@ -659,6 +661,10 @@ const APP = {
     // Update btn style
     const btn = document.querySelector(`#itm-${itemId} .btn-decant`);
     if (btn) btn.classList.toggle('has-val', !!ml);
+  },
+  editItem(itemId) {
+    const item = db_data[tripId]?.items?.[itemId];
+    if (item) openAddModal(item);
   }
 };
 window.APP = APP;
@@ -740,16 +746,20 @@ async function deleteTripHandler() {
 }
 
 // ── ADD ITEM MODAL ─────────────────────
-function openAddModal() {
-  document.getElementById('inp-ilabel').value = '';
-  document.getElementById('inp-icat').value   = '';
-  document.getElementById('inp-itab').value   = curTab==='local'?'local':curTab==='todo'?'todo':curTab==='recommend'?'recommend':'pack';
-  document.getElementById('inp-iml').checked  = false;
+function openAddModal(item = null) {
+  editItemId = item ? item.id : null;
+  document.querySelector('#m-item .modal-hd span').textContent = item ? '항목 수정' : '항목 추가';
+  document.getElementById('btn-save-item').textContent = item ? '저장' : '추가';
+  document.getElementById('inp-ilabel').value = item ? item.label : '';
+  document.getElementById('inp-icat').value   = item ? (item.cat||'') : '';
+  document.getElementById('inp-itab').value   = item ? item.section : (curTab==='local'?'local':curTab==='todo'?'todo':curTab==='recommend'?'recommend':'pack');
+  document.getElementById('inp-iml').checked  = item ? !!item.hasMl : false;
   document.getElementById('m-item').style.display = 'flex';
 }
 
 function closeAddModal() {
   document.getElementById('m-item').style.display = 'none';
+  editItemId = null;
 }
 
 async function saveItemHandler() {
@@ -758,15 +768,19 @@ async function saveItemHandler() {
   const section= document.getElementById('inp-itab').value;
   const hasMl  = document.getElementById('inp-iml').checked;
   if (!label) { alert('항목 이름을 입력해주세요'); return; }
-  const existCount = Object.keys(db_data[tripId]?.items||{}).length;
-  const id = 'i' + Date.now();
-  await dbSet(`${DB_ROOT}/${tripId}/items/${id}`, {
-    id, label, cat, sub:null, section,
-    checked:false, localBuy:false,
-    qty:null, qtyF:null,
-    hasMl, ml:null, cml:50,
-    ti:null, tt:null, ord: existCount
-  });
+  if (editItemId) {
+    await dbUpd(`${DB_ROOT}/${tripId}/items/${editItemId}`, { label, cat, section, hasMl });
+  } else {
+    const existCount = Object.keys(db_data[tripId]?.items||{}).length;
+    const id = 'i' + Date.now();
+    await dbSet(`${DB_ROOT}/${tripId}/items/${id}`, {
+      id, label, cat, sub:null, section,
+      checked:false, localBuy:false,
+      qty:null, qtyF:null,
+      hasMl, ml:null, cml:50,
+      ti:null, tt:null, ord: existCount
+    });
+  }
   closeAddModal();
 }
 
