@@ -9,10 +9,6 @@
 <meta name="apple-mobile-web-app-capable" content="yes">
 <meta name="apple-mobile-web-app-title" content="짐싸기">
 <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
-<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate">
-<meta http-equiv="Pragma" content="no-cache">
-<meta http-equiv="Expires" content="0">
-<script src="https://cdn.jsdelivr.net/npm/sortablejs@1.15.2/Sortable.min.js"></script>
 <style>
 @import url('https://fonts.googleapis.com/css2?family=Noto+Sans+KR:wght@300;400;500&display=swap');
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
@@ -70,30 +66,18 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .notice{font-size:12px;padding:9px 12px;border-radius:8px;margin-bottom:12px;line-height:1.7}
 .notice-warn{background:var(--warn-bg);color:var(--warn-text);border-left:3px solid #f0b429}
 .notice-info{background:var(--info-bg);color:var(--info-text);border-left:3px solid #4a90d9}
-.sec{background:var(--surface);border:1px solid var(--border);border-radius:12px;padding:10px 12px 6px;margin:0 0 8px 0;break-inside:avoid;-webkit-column-break-inside:avoid;page-break-inside:avoid;display:inline-block;width:100%}
-.sec-title{font-size:11px;font-weight:500;color:var(--text-muted);letter-spacing:.06em;padding:0;border:none;margin:0;text-transform:uppercase}
-.sec-title-row{padding-bottom:6px;border-bottom:1px solid var(--border-soft);margin-bottom:3px}
+.sec{margin-bottom:1.25rem}
+.sec-title{font-size:10px;font-weight:500;color:var(--text-muted);letter-spacing:.1em;text-transform:uppercase;padding-bottom:5px;border-bottom:1px solid var(--border);margin-bottom:3px}
 .subsec-label{font-size:11px;color:var(--text-muted);padding:7px 0 2px}
-
-/* ── 벽돌(masonry) 레이아웃 — 카테고리 카드를 컬럼 단위로 깔기 ── */
-#cat-list{column-count:2;column-gap:8px;column-fill:balance}
-@media (min-width:560px){#cat-list{column-count:3}}
-@media (min-width:840px){#cat-list{column-count:4}}
-.edit-mode #cat-list{column-count:1}
-#cat-list .itm-row{padding:6px 0;gap:5px;align-items:flex-start}
-#cat-list .itm-main{row-gap:4px}
-#cat-list .itm-label{flex:1 1 100%;font-size:13px;line-height:1.4;min-width:0;white-space:normal;word-break:break-word}
-#cat-list .itm-qty{font-size:10px;padding:1px 5px}
 
 /* ── ITEM ── */
 .itm{border-bottom:1px solid var(--border-soft)}
 .itm:last-child{border-bottom:none}
 .itm-row{display:flex;align-items:center;gap:9px;padding:9px 0}
-.itm-cb{display:none}
+.itm-cb{width:17px;height:17px;accent-color:var(--accent);flex-shrink:0;cursor:pointer}
 .itm-main{flex:1;display:flex;align-items:center;gap:5px;flex-wrap:wrap;min-width:0}
 .itm-label{font-size:14px;flex:1;min-width:0}
 .itm.done .itm-label{text-decoration:line-through;color:var(--text-muted)}
-.itm.done .itm-qty,.itm.done .itm-period,.itm.done .itm-bag,.itm.done .itm-decant,.itm.done .tag{opacity:.4}
 .itm.is-local .itm-label{color:var(--text-muted)}
 .itm-qty{font-size:11px;background:var(--accent-light);color:var(--accent);padding:1px 7px;border-radius:10px;font-weight:500;white-space:nowrap}
 .itm.is-local .itm-qty{background:var(--local-bg);color:var(--local-text)}
@@ -104,11 +88,12 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .tag-local{background:var(--local-bg);color:var(--local-text)}
 .btn-local{background:none;border:1px solid var(--border);border-radius:6px;font-size:13px;padding:2px 5px;cursor:pointer;color:var(--text-muted);line-height:1;flex-shrink:0}
 .btn-local.on{border-color:var(--local-text);color:var(--local-text);background:var(--local-bg)}
+.btn-decant{background:none;border:1px solid var(--border);border-radius:6px;font-size:10px;padding:2px 7px;cursor:pointer;color:var(--text-muted);flex-shrink:0;letter-spacing:-.2px}
+.btn-decant.has-val{border-color:var(--accent-mid);color:var(--accent);background:var(--accent-light)}
 
-/* ── DECANT PANEL — 칩으로 펴고 접음 ── */
-.decant-panel{position:relative;display:flex;background:rgba(107,92,231,.05);border:1px solid var(--accent-mid);border-radius:10px;padding:10px 12px;margin:0 0 8px;gap:10px;flex-wrap:wrap;align-items:center}
-.dp-close{position:absolute;top:6px;right:8px;font-family:inherit;background:none;border:none;font-size:14px;color:var(--text-muted);cursor:pointer;padding:2px 6px;line-height:1;border-radius:6px}
-.dp-close:active{background:var(--danger);color:#fff}
+/* ── DECANT PANEL ── */
+.decant-panel{display:none;background:rgba(107,92,231,.05);border:1px solid var(--accent-mid);border-radius:10px;padding:10px 12px;margin:0 0 8px;gap:10px;flex-wrap:wrap;align-items:center}
+.decant-panel.open{display:flex}
 .dp-group{display:flex;flex-direction:column;gap:3px}
 .dp-group label{font-size:10px;color:var(--text-muted)}
 .dp-group input,.dp-group select{font-family:'Noto Sans KR',sans-serif;font-size:13px;border:1px solid var(--border);border-radius:6px;padding:5px 8px;background:var(--surface);color:var(--text-primary);width:90px}
@@ -119,9 +104,6 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .local-row:last-child{border-bottom:none}
 .local-row .local-label{flex:1;font-size:14px}
 .revert-btn{font-family:'Noto Sans KR',sans-serif;font-size:11px;background:none;border:1px solid var(--local-text);color:var(--local-text);border-radius:6px;padding:3px 9px;cursor:pointer}
-.btn-local-del{font-family:inherit;background:none;border:none;font-size:16px;color:var(--text-muted);cursor:pointer;padding:1px 6px;border-radius:4px;line-height:1;flex-shrink:0;opacity:.5}
-.btn-local-del:active{opacity:1;background:var(--danger);color:#fff}
-.local-row .btn-inline-edit{opacity:.55}
 
 /* ── FAB ── */
 .fab{position:fixed;bottom:1.4rem;right:1.3rem;width:50px;height:50px;border-radius:50%;background:var(--accent);color:#fff;font-size:26px;border:none;cursor:pointer;box-shadow:0 3px 12px rgba(107,92,231,.4);display:flex;align-items:center;justify-content:center;z-index:20;line-height:1}
@@ -155,157 +137,6 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 .hd-info{flex:1;min-width:0;display:flex;flex-direction:column;align-items:center;gap:1px}
 .hd-name{font-size:15px;font-weight:500;overflow:hidden;white-space:nowrap;text-overflow:ellipsis;max-width:180px}
 .hd-nights{font-size:11px;color:var(--text-muted)}
-
-/* ── EDIT MODE ── */
-.icon-btn.on{background:var(--accent-light);color:var(--accent)}
-.btn-save-edit{display:none;font-family:inherit;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:12px;padding:6px 12px;font-weight:500;cursor:pointer}
-.edit-mode .btn-save-edit{display:inline-block}
-.edit-mode #btn-edit-mode,.edit-mode #btn-categorize{display:none}
-.edit-mode .itm-cb{display:none}
-.edit-mode .btn-local{display:none}
-.edit-mode .decant-panel{display:none!important}
-.edit-mode .itm-qty,.edit-mode .tag{display:none}
-.edit-mode .itm{background:var(--surface);border:1px solid var(--border);border-radius:10px;margin:0 0 6px;padding:0 11px}
-.edit-mode .itm-row{padding:11px 0;gap:8px}
-.edit-mode .itm.is-local .itm-label{color:var(--text-primary)}
-.edit-mode .itm.done .itm-label{text-decoration:none;color:var(--text-primary)}
-.edit-mode .itm.done .itm-qty,.edit-mode .itm.done .itm-period,.edit-mode .itm.done .itm-bag,.edit-mode .itm.done .itm-decant,.edit-mode .itm.done .tag{opacity:1}
-.edit-mode .cat-items{min-height:14px;padding:2px 0 4px}
-.edit-mode .sec{background:var(--bg);border-color:var(--border-soft)}
-.edit-mode .sec-title-row{padding-bottom:8px}
-.edit-mode .itm-period{padding:2px 7px;gap:3px;background:var(--ok-bg);color:var(--ok-text)}
-.edit-mode .itm-period.empty{background:var(--bg);color:var(--text-muted);border:1px dashed var(--border);opacity:1}
-.itm-period{display:inline-flex;align-items:center;gap:2px;font-size:10px;padding:1px 6px;border-radius:9px;font-weight:500;cursor:pointer;flex-shrink:0;line-height:1.5;background:var(--ok-bg);color:var(--ok-text)}
-.itm-period.empty{background:transparent;color:var(--text-muted);border:1px dashed var(--border);font-weight:400;opacity:.6}
-.itm-period.empty:active{opacity:1;background:var(--bg)}
-
-.btn-inline-edit{font-family:inherit;background:none;border:none;color:var(--text-muted);font-size:12px;cursor:pointer;padding:1px 3px;border-radius:4px;line-height:1;flex-shrink:0;opacity:.45}
-.btn-inline-edit:active{opacity:1;background:var(--accent-light);color:var(--accent)}
-.edit-mode .btn-inline-edit{display:none}
-.done .btn-inline-edit{opacity:.25}
-/* ── BAG FILTER (기내/위탁) ── */
-.bag-filter{display:flex;gap:6px;flex-wrap:wrap;margin:0 0 8px;padding:0}
-.bag-chip{font-family:inherit;font-size:12px;background:var(--surface);border:1px solid var(--border);color:var(--text-secondary);border-radius:14px;padding:5px 11px;cursor:pointer;display:inline-flex;align-items:center;gap:5px;line-height:1.3}
-.bag-chip.on{background:var(--accent);color:#fff;border-color:var(--accent)}
-.bag-chip-n{font-size:10px;background:rgba(0,0,0,.08);padding:1px 5px;border-radius:8px;font-weight:500}
-.bag-chip.on .bag-chip-n{background:rgba(255,255,255,.25);color:#fff}
-.bag-chip-decant{margin-left:auto}
-.bag-chip-decant.on{background:#1a5fb4;border-color:#1a5fb4}
-
-.decant-summary{background:var(--info-bg);color:var(--info-text);border:1px solid #b8d3f0;border-radius:10px;padding:9px 13px;margin:0 0 8px;font-size:13px;font-weight:500;display:flex;align-items:center;gap:6px;flex-wrap:wrap}
-.decant-summary b{font-weight:600}
-.decant-summary .ds-miss{color:var(--danger);font-size:11px;font-weight:400}
-
-.itm-bag{display:inline-flex;align-items:center;gap:2px;font-size:10px;padding:1px 6px;border-radius:9px;font-weight:500;cursor:pointer;flex-shrink:0;line-height:1.5}
-.itm-bag.carry{background:var(--info-bg);color:var(--info-text)}
-.itm-bag.checked{background:var(--ok-bg);color:var(--ok-text)}
-.itm-bag.empty{background:transparent;color:var(--text-muted);border:1px dashed var(--border);font-weight:400;opacity:.55}
-.itm-bag.empty:active{opacity:1;background:var(--bg)}
-
-.itm-decant{display:inline-flex;align-items:center;gap:2px;font-size:10px;padding:1px 6px;border-radius:9px;font-weight:500;cursor:pointer;flex-shrink:0;line-height:1.5;background:var(--info-bg);color:var(--info-text)}
-.itm-decant.open{background:var(--accent);color:#fff}
-.itm-decant.empty{background:transparent;color:var(--text-muted);border:1px dashed var(--border);font-weight:400;opacity:.6}
-.itm-decant.empty:active{opacity:1;background:var(--bg)}
-
-/* ── 정기 사용량 인라인 픽커 ── */
-.period-picker{position:absolute;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:6px;display:flex;gap:4px;flex-wrap:wrap;z-index:50;box-shadow:0 6px 18px rgba(0,0,0,.14);max-width:240px}
-.period-picker button{font-family:inherit;font-size:11px;background:var(--bg);border:1px solid var(--border);border-radius:7px;padding:5px 9px;cursor:pointer;line-height:1.3;color:var(--text-primary)}
-.period-picker button:active{background:var(--accent-light);border-color:var(--accent-mid);color:var(--accent)}
-.period-picker button.on{background:var(--accent);color:#fff;border-color:var(--accent)}
-.period-picker button.off{color:var(--danger);border-color:var(--danger)}
-.period-picker button.more{color:var(--accent);border-color:var(--accent-mid);background:var(--accent-light)}
-
-/* ── CATEGORIZE-ONLY MODE (가장 단순한 분류 전용 뷰) ── */
-.categorize-mode .btn-itm-edit,
-.categorize-mode .btn-itm-del,
-.categorize-mode .itm-period,
-.categorize-mode .cat-actions,
-.categorize-mode .cat-handle,
-.categorize-mode .add-cat-btn,
-.categorize-mode .edit-hint,
-.categorize-mode .notice{display:none!important}
-.categorize-mode .cl-content{padding:.5rem .55rem 5.5rem}
-
-/* ── SPLIT LAYOUT: 좌측 주머니 / 우측 바닥 ── */
-.layout-split{display:flex;gap:8px;height:calc(100vh - 220px);min-height:380px;overflow:hidden;margin-top:2px}
-.col-pouches,.col-floor{flex:1;min-width:0;display:flex;flex-direction:column;overflow-y:auto;padding-bottom:6px}
-.col-pouches{gap:6px}
-.col-title{font-size:10px;color:var(--text-muted);font-weight:500;letter-spacing:.06em;padding:2px 0 6px;position:sticky;top:0;background:var(--bg);z-index:1;text-transform:uppercase;display:flex;align-items:center;justify-content:space-between;gap:6px}
-.btn-floor-toggle{font-family:inherit;background:none;border:1px solid var(--border);color:var(--text-muted);font-size:10px;border-radius:6px;padding:3px 8px;cursor:pointer;line-height:1.4;flex-shrink:0;text-transform:none;letter-spacing:0}
-.btn-floor-toggle:active{background:var(--accent-light);color:var(--accent);border-color:var(--accent-mid)}
-.layout-split.floor-collapsed .col-floor{display:none}
-.layout-split.floor-collapsed .col-pouches{flex:1}
-.cat-toolbar{display:flex;gap:6px;justify-content:flex-end;margin-bottom:6px;flex-wrap:wrap}
-.pouch{background:var(--surface);border:1px solid var(--border);border-radius:10px;overflow:hidden;flex-shrink:0}
-.pouch-header{padding:9px 10px;display:flex;align-items:center;gap:6px;cursor:pointer;font-size:13px;font-weight:500;user-select:none;-webkit-tap-highlight-color:transparent}
-.pouch-header:active{background:var(--accent-light)}
-.pouch-name{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.pouch-count{font-size:10px;color:var(--text-muted);background:var(--bg);padding:2px 7px;border-radius:9px;font-weight:500;min-width:22px;text-align:center}
-.pouch-caret{font-size:10px;color:var(--text-muted);transition:transform .2s}
-.pouch.expanded .pouch-caret{transform:rotate(180deg)}
-.pouch-body{padding:5px 6px 6px;background:var(--bg);min-height:30px;border-top:1px dashed var(--border-soft)}
-.pouch.collapsed .pouch-body{max-height:30px;overflow:hidden;position:relative}
-.pouch.collapsed .pouch-body::before{content:'⌄ 떨구기';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:10px;color:var(--text-muted);pointer-events:none}
-.pouch.expanded .pouch-body{max-height:none}
-.col-floor .floor-wrap{flex:1;display:flex;flex-direction:column}
-.floor{background:var(--surface);border:2px dashed var(--border);border-radius:10px;padding:6px;flex:1;min-height:140px;overflow-y:auto}
-.floor:empty::before{content:'바닥에 끌어두면 분류 안 된 상태로 둘 수 있어요';display:block;color:var(--text-muted);font-size:11px;text-align:center;padding:1.5rem .5rem;line-height:1.5}
-.add-pouch-btn{font-family:inherit;width:100%;background:none;border:1px dashed var(--border);color:var(--text-muted);border-radius:10px;padding:9px;font-size:12px;cursor:pointer;flex-shrink:0;margin-top:6px}
-.add-pouch-btn:active{background:var(--accent-light);color:var(--accent);border-color:var(--accent-mid)}
-
-.itm.tiny{background:var(--surface);border:1px solid var(--border);border-radius:7px;padding:6px 4px 6px 9px;display:flex;align-items:center;gap:4px;font-size:12px;line-height:1.3;flex-shrink:0;margin-bottom:3px;cursor:grab;user-select:none;-webkit-user-select:none}
-.itm.tiny:active{cursor:grabbing;background:var(--accent-light);border-color:var(--accent-mid)}
-.itm.tiny:last-child{margin-bottom:0}
-.itm.tiny .itm-label{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:12px;pointer-events:none}
-.itm.tiny .btn-rename{font-family:inherit;background:none;border:none;font-size:11px;color:var(--text-muted);cursor:pointer;padding:3px 6px;flex-shrink:0;border-radius:5px;line-height:1}
-.itm.tiny .btn-rename:active{background:var(--accent-light);color:var(--accent)}
-.floor .itm.tiny{background:var(--bg)}
-.drag-handle{display:none;color:var(--text-muted);font-size:18px;cursor:grab;padding:0 6px;line-height:1;flex-shrink:0;touch-action:none;user-select:none}
-.edit-mode .drag-handle{display:inline-block}
-.btn-itm-edit,.btn-itm-del{display:none;font-family:inherit;background:none;border:1px solid var(--border);border-radius:6px;font-size:11px;padding:3px 8px;cursor:pointer;color:var(--text-muted);flex-shrink:0;line-height:1.4}
-.btn-itm-del{color:var(--danger);border-color:var(--danger)}
-.edit-mode .btn-itm-edit,.edit-mode .btn-itm-del{display:inline-block}
-.cat-actions{display:none;gap:4px;align-items:center}
-.edit-mode .cat-actions{display:flex}
-.btn-cat{font-family:inherit;background:none;border:none;font-size:13px;padding:3px 6px;cursor:pointer;color:var(--text-muted);line-height:1}
-.btn-cat.danger{color:var(--danger)}
-.sec-title-row{display:flex;align-items:center;justify-content:space-between;gap:8px;padding-bottom:5px;border-bottom:1px solid var(--border);margin-bottom:3px}
-.sec-title-row .sec-title{padding:0;border:none;margin:0;flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.cat-handle{display:none;color:var(--text-muted);font-size:16px;cursor:grab;padding:0 4px 0 0;flex-shrink:0;touch-action:none;user-select:none}
-.edit-mode .cat-handle{display:inline-block}
-.add-cat-btn{font-family:inherit;width:100%;background:none;border:1px dashed var(--border);color:var(--text-muted);border-radius:10px;padding:11px;font-size:13px;cursor:pointer;margin-top:8px;display:none}
-.edit-mode .add-cat-btn{display:block}
-.add-cat-btn:active{background:var(--accent-light);color:var(--accent);border-color:var(--accent-mid)}
-.sortable-ghost{opacity:.4}
-.sortable-chosen{background:var(--accent-light)}
-.itm.dragging{background:var(--accent-light);border-radius:8px}
-.edit-mode .notice{display:none}
-.edit-mode .subsec-label{display:none}
-.edit-hint{display:none;font-size:11px;color:var(--text-muted);background:var(--info-bg);border-radius:8px;padding:8px 10px;margin-bottom:10px;line-height:1.6}
-.edit-mode .edit-hint{display:block}
-
-/* ── DECANT PANEL EXTENSIONS ── */
-.dp-divider{width:100%;height:1px;background:var(--accent-mid);opacity:.3;margin:2px 0}
-.dp-section-label{font-size:10px;color:var(--accent);font-weight:500;width:100%;letter-spacing:.05em}
-.dp-result.calc{background:var(--ok-bg);color:var(--ok-text)}
-.dp-apply{font-family:inherit;font-size:11px;background:var(--accent);color:#fff;border:none;border-radius:6px;padding:5px 10px;cursor:pointer;align-self:flex-end}
-.dp-apply:active{opacity:.85}
-
-/* ── PUMP SIZE CHIPS ── */
-.pump-chips{display:flex;gap:6px;flex-wrap:wrap;width:100%}
-.pump-chip{font-family:inherit;font-size:11px;background:var(--surface);border:1px solid var(--border);color:var(--text-secondary);border-radius:8px;padding:5px 10px;cursor:pointer;line-height:1.3}
-.pump-chip.on{background:var(--accent-light);border-color:var(--accent-mid);color:var(--accent);font-weight:500}
-.pump-chip-row{font-size:11px;color:var(--text-muted);width:100%;margin-bottom:3px}
-
-/* ── INPUT GROUP ── */
-.row-2{display:flex;gap:9px}
-.row-2>div{flex:1;display:flex;flex-direction:column;gap:4px}
-.row-2 input{font-family:'Noto Sans KR',sans-serif;font-size:14px;border:1px solid var(--border);border-radius:8px;padding:8px 10px;background:var(--bg);color:var(--text-primary);width:100%}
-.row-2 label{font-size:11px;color:var(--text-muted)}
-.section-card{background:var(--bg);border:1px solid var(--border);border-radius:10px;padding:11px;display:flex;flex-direction:column;gap:8px}
-.section-card-title{font-size:12px;color:var(--text-secondary);font-weight:500}
-.help-text{font-size:11px;color:var(--text-muted);line-height:1.5}
-.calc-result{font-size:12px;background:var(--accent-light);color:var(--accent);border-radius:6px;padding:6px 10px;font-weight:500;text-align:center}
 </style>
 </head>
 <body>
@@ -333,9 +164,6 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
       <span class="hd-name" id="hd-name"></span>
       <span class="hd-nights" id="hd-nights"></span>
     </div>
-    <button class="icon-btn" id="btn-categorize" title="분류만">📋</button>
-    <button class="icon-btn" id="btn-edit-mode" title="편집">✏️</button>
-    <button class="btn-save-edit" id="btn-save-edit">저장</button>
     <button class="icon-btn" id="btn-edit">···</button>
   </header>
   <div class="prog-wrap">
@@ -379,10 +207,6 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
         </div>
       </div>
       <div class="nights-chip" id="nights-chip" style="display:none" id="nights-chip"></div>
-      <div class="cb-row" id="row-blank" style="margin-top:12px">
-        <input type="checkbox" id="inp-blank">
-        <label for="inp-blank">📝 빈 목록으로 시작 (기본 짐 템플릿 없이)</label>
-      </div>
     </div>
     <div class="modal-ft">
       <button class="btn-danger" id="btn-del-trip" style="display:none">삭제</button>
@@ -391,19 +215,18 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
   </div>
 </div>
 
-<!-- ─── Modal: Add/Edit Item ─── -->
+<!-- ─── Modal: Add Item ─── -->
 <div id="m-item" class="modal-overlay" style="display:none">
   <div class="modal">
     <div class="modal-hd">
-      <span id="m-item-title">항목 추가</span>
+      <span>항목 추가</span>
       <button class="modal-close" id="m-item-close">×</button>
     </div>
     <div class="modal-body">
       <label>항목 이름</label>
       <input type="text" id="inp-ilabel" placeholder="예: 선글라스">
       <label>카테고리</label>
-      <input type="text" id="inp-icat" list="cat-suggest" placeholder="예: 가방·소지품">
-      <datalist id="cat-suggest"></datalist>
+      <input type="text" id="inp-icat" placeholder="예: 가방·소지품">
       <label>탭</label>
       <select id="inp-itab">
         <option value="pack">짐 목록</option>
@@ -411,89 +234,12 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
         <option value="local">현지 구매</option>
         <option value="recommend">추천</option>
       </select>
-
-      <label>수하물 분류 (짐 목록 탭에서만 사용)</label>
-      <select id="inp-ibag">
-        <option value="checked">🧳 위탁 수하물 (기본)</option>
-        <option value="carry">🛄 기내 반입</option>
-      </select>
-
-      <div class="cb-row">
-        <input type="checkbox" id="inp-ilocal">
-        <label for="inp-ilocal">🛒 현지에서 구매 (안 챙겨도 됨)</label>
-      </div>
-
-      <label>특이 표시 (선택, 예: 휴대용 / 기내 반입)</label>
-      <div class="row-2">
-        <div>
-          <label>색</label>
-          <select id="inp-iti">
-            <option value="">없음</option>
-            <option value="info">파랑</option>
-            <option value="warn">주황</option>
-            <option value="ok">초록</option>
-          </select>
-        </div>
-        <div>
-          <label>표시 텍스트</label>
-          <input type="text" id="inp-itt" placeholder="예: 휴대용">
-        </div>
-      </div>
-
-      <div class="cb-row">
-        <input type="checkbox" id="inp-ipd-on">
-        <label for="inp-ipd-on">정기 사용량 자동 계산 (양말·렌즈 등)</label>
-      </div>
-      <div class="section-card" id="inp-ipd-box" style="display:none">
-        <div class="section-card-title">며칠에 몇 개 사용?</div>
-        <div class="pump-chips" id="pd-presets">
-          <button type="button" class="pump-chip" data-every="1" data-count="1">매일 1개</button>
-          <button type="button" class="pump-chip" data-every="2" data-count="1">2일에 1개</button>
-          <button type="button" class="pump-chip" data-every="3" data-count="1">3일에 1개</button>
-          <button type="button" class="pump-chip" data-every="1" data-count="2">매일 2개</button>
-        </div>
-        <div class="row-2">
-          <div>
-            <label>매</label>
-            <input type="number" id="inp-ipd-every" min="1" step="1" value="1" placeholder="일">
-          </div>
-          <div>
-            <label>개수</label>
-            <input type="number" id="inp-ipd-count" min="1" step="1" value="1" placeholder="개">
-          </div>
-        </div>
-        <div class="help-text">예: 매일 1개 = 하루 한 켤레 / 2일에 1개 = 이틀치 한 개<br>여행 일수에 맞춰 자동으로 필요 수량이 나와요.</div>
-        <div class="calc-result" id="inp-ipd-preview" style="display:none"></div>
-      </div>
-
       <div class="cb-row">
         <input type="checkbox" id="inp-iml">
         <label for="inp-iml">화장품 소분 계산기 추가</label>
       </div>
-      <div class="section-card" id="inp-ipump-box" style="display:none">
-        <div class="section-card-title">펌프 기반 자동 계산 (선택)</div>
-        <div class="pump-chip-row">펌프 크기 선택</div>
-        <div class="pump-chips" id="pump-size-presets">
-          <button type="button" class="pump-chip" data-mlp="0.6">소 0.6ml</button>
-          <button type="button" class="pump-chip" data-mlp="1.25">중 1~1.5ml</button>
-          <button type="button" class="pump-chip" data-mlp="2.5">대 2~3ml</button>
-        </div>
-        <div class="row-2">
-          <div>
-            <label>하루 펌프 수</label>
-            <input type="number" id="inp-ipump-pd" min="0" step="0.5" placeholder="예: 3">
-          </div>
-          <div>
-            <label>1펌프 = ml</label>
-            <input type="number" id="inp-ipump-mlp" min="0" step="0.05" placeholder="예: 0.6">
-          </div>
-        </div>
-        <div class="help-text">소(0.6ml)·중(1.25ml)·대(2.5ml) 칩을 누르면 1펌프 ml이 자동 채워져요.<br>하루 펌프 × 1펌프 ml × 일수 = 총 필요 ml → 용기 사이즈 추천.</div>
-        <div class="calc-result" id="inp-ipump-preview" style="display:none"></div>
-      </div>
     </div>
     <div class="modal-ft">
-      <button class="btn-danger" id="btn-del-item" style="display:none">삭제</button>
       <button class="btn-primary" id="btn-save-item">추가</button>
     </div>
   </div>
@@ -503,9 +249,9 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
 // ══════════════════════════════════════════
 //  ★ FIREBASE CONFIG — 새 프로젝트 정보 입력
 // ══════════════════════════════════════════
-import { initializeApp }   from "https://www.gstatic.com/firebasejs/10.12.0/firebase-app.js";
+import { initializeApp }   from "https://www.gstatic.com/firebasejs/12.13.0/firebase-app.js";
 import { getDatabase, ref, set, onValue, update, remove }
-  from "https://www.gstatic.com/firebasejs/10.12.0/firebase-database.js";
+  from "https://www.gstatic.com/firebasejs/12.13.0/firebase-database.js";
 
 const FB_CONFIG = {
   apiKey:            "AIzaSyD3ySh1kJ6vSg3EX88SksA7Xc-XsSjdVdg",
@@ -531,18 +277,10 @@ try {
 }
 
 // ── STATE ──────────────────────────────
-let tripId    = null;  // 현재 보고 있는 트립
-let curTab    = 'pack';
-let editId    = null;  // 모달 편집 중인 트립
-let editItemId= null;  // 모달 편집 중인 항목
-let editMode  = null;  // null | 'edit' (전체 편집) | 'categorize' (분류만)
-let db_data   = {};    // { [tripId]: { meta, items } }
-let _sortables= [];    // 활성 SortableJS 인스턴스 목록
-let _expandedPouches = new Set(); // 분류 모드에서 펼쳐둔 주머니 — 리렌더 후 복원
-let _floorCollapsed = false;      // 분류 모드: 바닥 접힘 여부
-let _expandedDecants = new Set(); // 펼쳐둔 소분 패널 (UI 전용, 시작 시 항상 접힘)
-let _bagFilter = ''; // '' | 'carry' | 'checked' — 짐 목록 탭 기내/위탁 필터
-let _decantOnly = false; // true면 소분(hasMl) 항목만 보기
+let tripId  = null;  // 현재 보고 있는 트립
+let curTab  = 'pack';
+let editId  = null;  // 모달 편집 중인 트립
+let db_data = {};    // { [tripId]: { meta, items } }
 
 // ── HELPERS ────────────────────────────
 const esc = s => (s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
@@ -557,34 +295,9 @@ function calcQty(formula, n) {
   try { return Math.max(1, Math.round(eval(formula))); } catch { return 1; }
 }
 
-// 정기 사용량 (every N일에 count개) 기반 수량 계산
-function calcQtyPeriodic(perDayEvery, perDayCount, nights) {
-  if (!perDayEvery || !perDayCount) return null;
-  if (nights <= 0) return perDayCount;
-  // 여행 일수(=nights+1)동안 every일에 count개 = ceil((nights+1)/every)*count
-  const days = nights + 1;
-  return Math.max(1, Math.ceil(days / perDayEvery) * perDayCount);
-}
-
-// 펌프 기반 필요 ml 계산
-function calcPumpMl(pumpsPerDay, mlPerPump, nights) {
-  if (!pumpsPerDay || !mlPerPump) return null;
-  const days = Math.max(1, nights + 1);
-  return +(pumpsPerDay * mlPerPump * days).toFixed(2);
-}
-
 function calcDecant(ml, cml) {
   if (!ml || !cml) return null;
   return Math.ceil(ml / cml);
-}
-
-// 항목의 표시 수량 결정 (perDay 우선, 없으면 qtyF)
-function itemQty(item, nights) {
-  if (item.perDayEvery && item.perDayCount) {
-    return calcQtyPeriodic(item.perDayEvery, item.perDayCount, nights);
-  }
-  if (item.qtyF && nights > 0) return calcQty(item.qtyF, nights);
-  return null;
 }
 
 function nightsLabel(n) {
@@ -691,35 +404,12 @@ function makeTemplate(nights) {
       id, label:t.l, cat:t.c, sub:t.sub||null,
       section: sec, checked:false, localBuy:false,
       qty, qtyF:t.f||null,
-      perDayEvery:null, perDayCount:null,
-      hasMl:!!(t.ml),
-      pumpsPerDay:null, mlPerPump:null,
+      hasMl:!!(t.ml), ml:null, cml:50,
       ti:t.ti||null, tt:t.tt||null,
       ord:i
     };
   });
   return out;
-}
-
-// 카테고리 순서 가져오기 (meta.catOrder 우선, 없으면 첫 등장 순)
-// 편집 모드에서는 빈 카테고리도 표시하도록 saved를 모두 포함
-function getCatOrder(items, section, meta) {
-  const present = [];
-  items.filter(i => i.section === section).forEach(i => {
-    const c = i.cat || '기타';
-    if (!present.includes(c)) present.push(c);
-  });
-  const saved = meta?.catOrder?.[section] || [];
-  const result = editMode
-    ? [...saved]
-    : saved.filter(c => present.includes(c));
-  present.forEach(c => { if (!result.includes(c)) result.push(c); });
-  return result;
-}
-
-function destroySortables() {
-  _sortables.forEach(s => { try { s.destroy(); } catch(e){} });
-  _sortables = [];
 }
 
 // ── HOME RENDER ────────────────────────
@@ -767,36 +457,13 @@ function renderChecklist() {
   if (!data) return;
   const items = Object.values(data.items||{}).sort((a,b)=>(a.ord||0)-(b.ord||0));
 
-  destroySortables();
   updateProgress(items);
 
-  const screen = document.getElementById('s-trip');
-  screen.classList.toggle('edit-mode',       !!editMode);
-  screen.classList.toggle('categorize-mode', editMode === 'categorize');
-
   const el = document.getElementById('cl-content');
-  if (editMode === 'categorize') {
-    el.innerHTML = renderCategorize(items, curTab, data.meta);
-  } else if (curTab === 'pack')      el.innerHTML = renderPack(items, data.meta);
-  else if (curTab === 'todo') el.innerHTML = renderSimple(items, data.meta, 'todo');
-  else if (curTab === 'local')el.innerHTML = renderLocal(items, data.meta);
-  else                        el.innerHTML = renderSimple(items, data.meta, 'recommend');
-
-  if (editMode) initSortables();
-
-  // 분류 모드: 펼쳐둔 주머니 상태 복원
-  if (editMode === 'categorize') {
-    _expandedPouches.forEach(key => {
-      const [sec, cat] = key.split(':');
-      if (sec !== curTab) return;
-      const pouch = document.querySelector(`.pouch[data-cat="${CSS.escape(cat)}"]`);
-      if (pouch) {
-        pouch.classList.remove('collapsed');
-        pouch.classList.add('expanded');
-      }
-    });
-  }
-
+  if (curTab === 'pack')      el.innerHTML = renderPack(items, data.meta);
+  else if (curTab === 'todo') el.innerHTML = renderSimple(items, 'todo');
+  else if (curTab === 'local')el.innerHTML = renderLocal(items);
+  else                        el.innerHTML = renderSimple(items, 'recommend');
 }
 
 function updateProgress(items) {
@@ -812,439 +479,143 @@ function updateProgress(items) {
 
 function renderPack(items, meta) {
   const nights = meta?.nights || 0;
-  const allPack = items.filter(i => i.section==='pack');
-  const carryN  = allPack.filter(i => i.bag === 'carry').length;
-  const checkedN= allPack.length - carryN; // 기내 아니면 모두 위탁
-  const decantItems = allPack.filter(i => i.hasMl);
-  const decantN = decantItems.length;
+  const pack   = items.filter(i => i.section==='pack');
+  const cats   = [...new Set(pack.map(i => i.cat))];
 
-  // 필터 적용: bag + 소분 (AND)
-  let pack = allPack;
-  if (_bagFilter === 'carry')        pack = pack.filter(i => i.bag === 'carry');
-  else if (_bagFilter === 'checked') pack = pack.filter(i => i.bag !== 'carry');
-  if (_decantOnly)                    pack = pack.filter(i => i.hasMl);
-
-  const cats = getCatOrder(items, 'pack', meta)
-    .filter(c => pack.some(i => (i.cat||'기타') === c));
-
-  const chip = (val, lbl, n) =>
-    `<button class="bag-chip${_bagFilter===val?' on':''}" onclick="APP.setBagFilter('${val}')">${lbl}${n!=null?` <span class="bag-chip-n">${n}</span>`:''}</button>`;
-  const decantBtn = `<button class="bag-chip bag-chip-decant${_decantOnly?' on':''}" onclick="APP.toggleDecantOnly()">💧 소분만 <span class="bag-chip-n">${decantN}</span></button>`;
-  let html = `<div class="bag-filter">
-    ${chip('', '전체', allPack.length)}
-    ${chip('carry', '🛄 기내', carryN)}
-    ${chip('checked', '🧳 위탁', checkedN)}
-    ${decantN > 0 ? decantBtn : ''}
-  </div>`;
-
-  // 소분 요약 — 필터 켰을 때만 표시
-  if (_decantOnly && decantN > 0) {
-    const totalMl = decantItems.reduce((s, i) => {
-      const v = calcPumpMl(i.pumpsPerDay, i.mlPerPump, nights);
-      return s + (v || 0);
-    }, 0);
-    const filledN = decantItems.filter(i => calcPumpMl(i.pumpsPerDay, i.mlPerPump, nights) != null).length;
-    const missingN = decantN - filledN;
-    const totalLbl = totalMl > 0 ? ` · 총 ${(+totalMl.toFixed(1))} ml 필요` : '';
-    const missLbl  = missingN > 0 ? ` <span class="ds-miss">(펌프 미입력 ${missingN})</span>` : '';
-    html += `<div class="decant-summary">💧 소분 용기 <b>${decantN}개</b>${totalLbl}${missLbl}</div>`;
-  }
-
-  html += `<div class="notice notice-warn">노트북 기내 반입 시 캐리어 위탁 수하물 자동 확정 · 액체류 100ml 초과 제품은 위탁 분류</div>`;
-  html += renderEditHint();
-  html += `<div id="cat-list" data-section="pack">`;
+  let html = `<div class="notice notice-warn">노트북 기내 반입 시 캐리어 위탁 수하물 자동 확정 · 액체류 100ml 초과 제품은 위탁 분류</div>`;
 
   cats.forEach(cat => {
-    html += renderCategory(pack, cat, nights, 'pack');
-  });
-
-  html += `</div>`;
-  html += `<button class="add-cat-btn" data-section="pack">＋ 새 카테고리</button>`;
-  return html;
-}
-
-function renderCategory(sectionItems, cat, nights, section) {
-  const ci = sectionItems.filter(i => (i.cat||'기타') === cat).sort((a,b)=>(a.ord||0)-(b.ord||0));
-  const subs = [...new Set(ci.map(i => i.sub||''))];
-  let html = `<div class="sec" data-cat="${esc(cat)}">
-    <div class="sec-title-row">
-      <span class="cat-handle" title="카테고리 이동">⋮⋮</span>
-      <span class="sec-title">${esc(cat)}</span>
-      <span class="cat-actions">
-        <button class="btn-cat" onclick="APP.renameCategory('${esc(section)}','${esc(cat).replace(/'/g,"\\'")}')">이름</button>
-        <button class="btn-cat danger" onclick="APP.deleteCategory('${esc(section)}','${esc(cat).replace(/'/g,"\\'")}')">삭제</button>
-      </span>
-    </div>
-    <div class="cat-items" data-cat="${esc(cat)}" data-section="${esc(section)}">`;
-  subs.forEach(sub => {
-    if (sub) html += `<div class="subsec-label">— ${esc(sub)}</div>`;
-    ci.filter(i=>(i.sub||'')===sub).forEach(item => {
-      html += section === 'pack'
-        ? renderPackItem(item, nights)
-        : renderSimpleItem(item, nights);
+    const ci = pack.filter(i => i.cat === cat);
+    html += `<div class="sec"><div class="sec-title">${esc(cat)}</div>`;
+    const subs = [...new Set(ci.map(i => i.sub||''))];
+    subs.forEach(sub => {
+      if (sub) html += `<div class="subsec-label">— ${esc(sub)}</div>`;
+      ci.filter(i=>(i.sub||'')===sub).forEach(item => {
+        html += renderPackItem(item, nights);
+      });
     });
+    html += `</div>`;
   });
-  html += `</div></div>`;
   return html;
-}
-
-function renderEditHint() {
-  const text = '⋮⋮ 핸들로 항목·카테고리를 끌어 옮길 수 있어요. 이름·삭제는 카테고리 옆 버튼으로.';
-  return `<div class="edit-hint">${text}</div>`;
-}
-
-// 분류 모드의 floor 식별용 cat name
-const FLOOR_CAT = '미분류';
-
-function renderCategorize(items, section, meta) {
-  const sectionItems = items.filter(i => i.section === section);
-  const floorItems   = sectionItems.filter(i => (i.cat||'') === FLOOR_CAT)
-                                   .sort((a,b) => (a.ord||0) - (b.ord||0));
-  const cats = getCatOrder(items, section, meta).filter(c => c !== FLOOR_CAT);
-  const collapsed = _floorCollapsed;
-
-  const allExpanded = cats.length > 0 && cats.every(c => _expandedPouches.has(section + ':' + c));
-  let html = `<div class="cat-toolbar">
-    <button class="btn-floor-toggle" onclick="APP.resetToFloor()">↺ 전부 바닥으로</button>
-    <button class="btn-floor-toggle" onclick="APP.toggleAllPouches()">${allExpanded ? '📁 주머니 접기' : '📂 주머니 펴기'}</button>
-    ${collapsed
-      ? `<button class="btn-floor-toggle" onclick="APP.toggleFloor()">🪣 바닥 (${floorItems.length}) 펴기</button>`
-      : `<button class="btn-floor-toggle" onclick="APP.toggleFloor()">🪣 바닥 접기</button>`}
-  </div>
-  <div class="layout-split${collapsed?' floor-collapsed':''}">
-    <div class="col-pouches">
-      <div class="col-title">
-        <span>📦 주머니${collapsed?'':' (탭→열림)'}</span>
-      </div>`;
-
-  cats.forEach(cat => {
-    const ci = sectionItems.filter(i => (i.cat||'기타') === cat)
-                           .sort((a,b) => (a.ord||0) - (b.ord||0));
-    html += `<div class="pouch collapsed" data-cat="${esc(cat)}">
-      <div class="pouch-header" onclick="APP.togglePouch(this)">
-        <span class="pouch-name">${esc(cat)}</span>
-        <span class="pouch-count">${ci.length}</span>
-        <span class="pouch-caret">▾</span>
-      </div>
-      <div class="pouch-body cat-items" data-cat="${esc(cat)}" data-section="${esc(section)}">
-        ${ci.map(it => renderTinyItem(it)).join('')}
-      </div>
-    </div>`;
-  });
-
-  html += `<button class="add-pouch-btn" data-section="${esc(section)}" onclick="APP.addCategory('${esc(section)}')">＋ 주머니 추가</button>
-    </div>`;
-
-  if (!collapsed) {
-    html += `<div class="col-floor">
-      <div class="col-title">
-        <span>🪣 바닥 (${floorItems.length})</span>
-      </div>
-      <div class="floor cat-items" data-cat="${FLOOR_CAT}" data-section="${esc(section)}">
-        ${floorItems.map(it => renderTinyItem(it)).join('')}
-      </div>
-    </div>`;
-  }
-
-  html += `</div>`;
-  return html;
-}
-
-function renderTinyItem(item) {
-  return `<div class="itm tiny" data-id="${item.id}">
-    <span class="itm-label">${esc(item.label)}</span>
-    <button class="btn-rename" onclick="event.stopPropagation();APP.renameItem('${item.id}')" title="이름 수정">✎</button>
-  </div>`;
 }
 
 function renderPackItem(item, nights) {
   const isLocal = item.localBuy;
   const isDone  = item.checked;
 
-  // qty badge — 정기 아이템은 칩에 총 개수를 표시하므로 별도 배지 없음
+  // qty badge
   let qtyHtml = '';
-  const q = itemQty(item, nights);
-  if (q != null && !(item.perDayEvery && item.perDayCount)) {
-    qtyHtml = `<span class="itm-qty">×${q}</span>`;
+  if (item.qtyF && nights > 0) {
+    const q = calcQty(item.qtyF, nights);
+    qtyHtml = `<span class="itm-qty">${nights}박 기준 ×${q}</span>`;
   }
-
-  // 정기 칩 — 총 개수만 칩에 표시
-  let periodChip = '';
-  if (item.perDayEvery && item.perDayCount) {
-    const subtitle = item.perDayEvery === 1
-      ? `하루 ${item.perDayCount}개`
-      : `${item.perDayEvery}일에 ${item.perDayCount}개`;
-    const lbl = nights > 0
-      ? `${calcQtyPeriodic(item.perDayEvery, item.perDayCount, nights)}개`
-      : subtitle;
-    periodChip = `<span class="itm-period" title="${subtitle}" onclick="event.preventDefault();event.stopPropagation();APP.openPeriodPicker('${item.id}', this)">🔁 ${lbl}</span>`;
-  } else {
-    periodChip = `<span class="itm-period empty" onclick="event.preventDefault();event.stopPropagation();APP.openPeriodPicker('${item.id}', this)">🔁 정기?</span>`;
-  }
-
-  // 소분 칩 — 패널 열기/닫기 토글. 끄기는 패널 안 ✕ 버튼으로.
-  let decantChip = '';
-  const decantOpen = _expandedDecants.has(item.id);
-  if (item.hasMl) {
-    const pumpMl = calcPumpMl(item.pumpsPerDay, item.mlPerPump, nights);
-    const info = pumpMl != null ? `${pumpMl}ml 필요` : '소분';
-    decantChip = `<span class="itm-decant${decantOpen?' open':''}" onclick="event.preventDefault();event.stopPropagation();APP.toggleDecantPanel('${item.id}')" title="탭하여 패널 ${decantOpen?'접기':'펴기'}">💧 ${info}</span>`;
-  } else {
-    decantChip = `<span class="itm-decant empty" onclick="event.preventDefault();event.stopPropagation();APP.enableDecant('${item.id}')" title="탭하여 소분 켜기">💧 소분?</span>`;
-  }
-
-  // 수하물 분류 칩 — 기본 위탁, 기내만 별도 표시. 탭하면 토글.
-  const isCarry = item.bag === 'carry';
-  const bagChip = isCarry
-    ? `<span class="itm-bag carry" onclick="event.preventDefault();event.stopPropagation();APP.cycleBag('${item.id}')" title="탭하여 위탁으로">🛄 기내</span>`
-    : `<span class="itm-bag checked" onclick="event.preventDefault();event.stopPropagation();APP.cycleBag('${item.id}')" title="탭하여 기내로">🧳 위탁</span>`;
 
   // tag
   let tagHtml = '';
   if (item.ti) tagHtml += `<span class="tag tag-${item.ti}">${esc(item.tt||'')}</span>`;
-  if (isLocal)  tagHtml += `<span class="tag tag-local">🛒 현지</span>`;
+  if (isLocal)  tagHtml += `<span class="tag tag-local">🛒 현지구매</span>`;
 
-  // decant — 패널은 칩으로 펼쳤을 때만 표시. ✕ 버튼으로 소분 끄기.
-  let decantPanel = '';
-  if (item.hasMl && decantOpen) {
-    const pumpMl = calcPumpMl(item.pumpsPerDay, item.mlPerPump, nights);
-    const hasPump = item.pumpsPerDay && item.mlPerPump;
-    const mlp = item.mlPerPump || 0;
-    const sizeChip = (val, label) =>
-      `<button type="button" class="pump-chip${Math.abs(mlp-val)<0.01?' on':''}" onclick="APP.setPumpSize('${item.id}',${val})">${label}</button>`;
+  // decant
+  let decantBtn = '', decantPanel = '';
+  if (item.hasMl) {
+    const hasVal = item.ml && item.ml > 0;
+    const needed = hasVal ? calcDecant(item.ml, item.cml||50) : null;
+    decantBtn = `<button class="btn-decant${hasVal?' has-val':''}" onclick="APP.toggleDecant('${item.id}')">소분</button>`;
     decantPanel = `
       <div class="decant-panel" id="dp-${item.id}">
-        <button class="dp-close" onclick="APP.disableDecant('${item.id}')" title="소분 끄기">✕</button>
-        <div class="dp-section-label">펌프 사이즈</div>
-        <div class="pump-chips">
-          ${sizeChip(0.6,'소 0.6ml')}
-          ${sizeChip(1.25,'중 1~1.5ml')}
-          ${sizeChip(2.5,'대 2~3ml')}
+        <div class="dp-group">
+          <label>원본 용량 (ml)</label>
+          <input type="number" min="0" max="9999" placeholder="예: 150"
+            value="${item.ml||''}"
+            onchange="APP.saveDecant('${item.id}',this.value,document.getElementById('dc-${item.id}').value)">
         </div>
         <div class="dp-group">
-          <label>하루 펌프</label>
-          <input type="number" id="ppd-${item.id}" min="0" step="0.5" value="${item.pumpsPerDay||''}"
-            onchange="APP.savePumpField('${item.id}')">
+          <label>용기 사이즈</label>
+          <select id="dc-${item.id}"
+            onchange="APP.saveDecant('${item.id}',this.parentElement.previousElementSibling.querySelector('input').value,this.value)">
+            <option value="30" ${(item.cml||50)==30?'selected':''}>30ml</option>
+            <option value="50" ${(item.cml||50)==50?'selected':''}>50ml</option>
+            <option value="100" ${(item.cml||50)==100?'selected':''}>100ml</option>
+          </select>
         </div>
-        <div class="dp-group">
-          <label>1펌프 ml</label>
-          <input type="number" id="mlp-${item.id}" min="0" step="0.05" value="${item.mlPerPump||''}"
-            onchange="APP.savePumpField('${item.id}')">
-        </div>
-        ${hasPump ? `<div class="dp-result calc">≈ ${pumpMl} ml 필요 (${nights+1}일)</div>` : ''}
+        ${needed ? `<div class="dp-result" id="dpr-${item.id}">용기 ${needed}개 필요</div>` : `<div class="dp-result" id="dpr-${item.id}" style="display:none"></div>`}
       </div>`;
   }
 
   return `
-    <div class="itm ${isDone&&!isLocal?'done':''} ${isLocal?'is-local':''}" id="itm-${item.id}" data-id="${item.id}">
+    <div class="itm ${isDone&&!isLocal?'done':''} ${isLocal?'is-local':''}" id="itm-${item.id}">
       <div class="itm-row">
-        <span class="drag-handle" title="이동">⋮⋮</span>
         <input type="checkbox" class="itm-cb" id="cb-${item.id}"
           ${isDone?'checked':''} ${isLocal?'disabled':''}
           onchange="APP.toggleCheck('${item.id}',this.checked)">
         <div class="itm-main">
           <label class="itm-label" for="cb-${item.id}">${esc(item.label)}</label>
-          <button class="btn-inline-edit" onclick="event.preventDefault();event.stopPropagation();APP.editItem('${item.id}')" title="수정">✎</button>
-          ${qtyHtml}${tagHtml}${bagChip}${periodChip}${decantChip}
+          ${qtyHtml}${tagHtml}
         </div>
-        <button class="btn-itm-edit" onclick="APP.editItem('${item.id}')">수정</button>
-        <button class="btn-itm-del" onclick="APP.deleteItem('${item.id}')">삭제</button>
+        ${decantBtn}
+        <button class="btn-local${isLocal?' on':''}" onclick="APP.toggleLocal('${item.id}')" title="현지구매 전환">🛒</button>
       </div>
       ${decantPanel}
     </div>`;
 }
 
-function renderSimpleItem(item, nights = 0) {
-  // 출발 전 할 일은 1회성 작업이라 정기 칩 숨김
-  const showPeriod = item.section !== 'todo';
-  let periodChip = '';
-  if (showPeriod) {
-    if (item.perDayEvery && item.perDayCount) {
-      const subtitle = item.perDayEvery === 1
-        ? `하루 ${item.perDayCount}개`
-        : `${item.perDayEvery}일에 ${item.perDayCount}개`;
-      const lbl = nights > 0
-        ? `${calcQtyPeriodic(item.perDayEvery, item.perDayCount, nights)}개`
-        : subtitle;
-      periodChip = `<span class="itm-period" title="${subtitle}" onclick="event.preventDefault();event.stopPropagation();APP.openPeriodPicker('${item.id}', this)">🔁 ${lbl}</span>`;
-    } else {
-      periodChip = `<span class="itm-period empty" onclick="event.preventDefault();event.stopPropagation();APP.openPeriodPicker('${item.id}', this)">🔁 정기?</span>`;
-    }
-  }
-  return `
-    <div class="itm ${item.checked?'done':''}" id="itm-${item.id}" data-id="${item.id}">
-      <div class="itm-row">
-        <span class="drag-handle" title="이동">⋮⋮</span>
-        <input type="checkbox" class="itm-cb" id="cb-${item.id}"
-          ${item.checked?'checked':''}
-          onchange="APP.toggleCheck('${item.id}',this.checked)">
-        <div class="itm-main">
-          <label class="itm-label" for="cb-${item.id}">${esc(item.label)}</label>
-          <button class="btn-inline-edit" onclick="event.preventDefault();event.stopPropagation();APP.editItem('${item.id}')" title="수정">✎</button>
-          ${item.ti?`<span class="tag tag-${item.ti}">${esc(item.tt||'')}</span>`:''}
-          ${periodChip}
-        </div>
-        <button class="btn-itm-edit" onclick="APP.editItem('${item.id}')">수정</button>
-        <button class="btn-itm-del" onclick="APP.deleteItem('${item.id}')">삭제</button>
-      </div>
-    </div>`;
-}
-
-function renderSimple(items, meta, section) {
+function renderSimple(items, section) {
   const si = items.filter(i => i.section === section);
-  let html = renderEditHint();
-  if (!si.length && !editMode) {
-    html += `<div style="padding:2rem;text-align:center;color:var(--text-muted)">항목이 없어요</div>`;
-    return html;
-  }
-  const cats = getCatOrder(items, section, meta);
-  html += `<div id="cat-list" data-section="${esc(section)}">`;
-  cats.forEach(cat => {
-    html += renderCategory(si, cat, meta?.nights || 0, section);
-  });
-  html += `</div>`;
-  html += `<button class="add-cat-btn" data-section="${esc(section)}">＋ 새 카테고리</button>`;
-  return html;
+  if (!si.length) return `<div style="padding:2rem;text-align:center;color:var(--text-muted)">항목이 없어요</div>`;
+  const cats = [...new Set(si.map(i=>i.cat||'기타'))];
+  return cats.map(cat => {
+    const ci = si.filter(i=>(i.cat||'기타')===cat);
+    return `<div class="sec"><div class="sec-title">${esc(cat)}</div>
+      ${ci.map(item=>`
+        <div class="itm ${item.checked?'done':''}" id="itm-${item.id}">
+          <div class="itm-row">
+            <input type="checkbox" class="itm-cb" id="cb-${item.id}"
+              ${item.checked?'checked':''}
+              onchange="APP.toggleCheck('${item.id}',this.checked)">
+            <div class="itm-main">
+              <label class="itm-label" for="cb-${item.id}">${esc(item.label)}</label>
+              ${item.ti?`<span class="tag tag-${item.ti}">${esc(item.tt||'')}</span>`:''}
+            </div>
+          </div>
+        </div>`).join('')}
+    </div>`;
+  }).join('');
 }
 
-function renderLocal(items, meta) {
+function renderLocal(items) {
   const fromPack  = items.filter(i => i.section==='pack' && i.localBuy);
   const localOnly = items.filter(i => i.section==='local');
 
   let html = `<div class="notice notice-info">현지에서 구매 예정인 항목이에요. 따로 챙기지 않아도 돼요.</div>`;
-  html += renderEditHint();
 
-  if (fromPack.length && !editMode) {
+  if (fromPack.length) {
     html += `<div class="sec"><div class="sec-title">짐 목록에서 이동됨</div>`;
     fromPack.forEach(item => {
       html += `<div class="local-row">
         <span>🛒</span>
         <span class="local-label">${esc(item.label)}</span>
-        <button class="btn-inline-edit" onclick="APP.editItem('${item.id}')" title="수정">✎</button>
         <button class="revert-btn" onclick="APP.toggleLocal('${item.id}')">되돌리기</button>
       </div>`;
     });
     html += `</div>`;
   }
 
-  // 편집 모드: local 섹션 항목들도 카테고리/드래그 가능
-  const cats = getCatOrder(items, 'local', meta);
-  if (cats.length || editMode) {
-    if (!editMode) html += `<div class="sec"><div class="sec-title">기본 현지 구매 목록</div>`;
-    if (editMode) {
-      html += `<div id="cat-list" data-section="local">`;
-      cats.forEach(cat => { html += renderCategory(localOnly, cat, meta?.nights || 0, 'local'); });
-      html += `</div>`;
-      html += `<button class="add-cat-btn" data-section="local">＋ 새 카테고리</button>`;
-    } else {
-      localOnly.forEach(item => {
-        html += `<div class="local-row">
-          <span style="color:var(--text-muted)">·</span>
-          <span class="local-label">${esc(item.label)}</span>
-          ${item.ti?`<span class="tag tag-${item.ti}">${esc(item.tt||'')}</span>`:''}
-          <button class="btn-inline-edit" onclick="APP.editItem('${item.id}')" title="수정">✎</button>
-          <button class="btn-local-del" onclick="APP.deleteItem('${item.id}')" title="삭제">×</button>
-        </div>`;
-      });
-      html += `</div>`;
-    }
+  if (localOnly.length) {
+    html += `<div class="sec"><div class="sec-title">기본 현지 구매 목록</div>`;
+    localOnly.forEach(item => {
+      html += `<div class="local-row">
+        <span style="color:var(--text-muted)">·</span>
+        <span class="local-label">${esc(item.label)}</span>
+        ${item.ti?`<span class="tag tag-${item.ti}">${esc(item.tt||'')}</span>`:''}
+      </div>`;
+    });
+    html += `</div>`;
   }
 
-  if (!fromPack.length && !localOnly.length && !editMode) {
+  if (!fromPack.length && !localOnly.length) {
     html += `<div style="padding:2rem;text-align:center;color:var(--text-muted)">항목이 없어요</div>`;
   }
   return html;
-}
-
-// ── SORTABLE INIT ──────────────────────
-function initSortables() {
-  if (!window.Sortable) return;
-  const isCategorize = editMode === 'categorize';
-  const opts = {
-    animation: 150,
-    ghostClass: 'sortable-ghost',
-    chosenClass: 'sortable-chosen',
-    forceFallback: true,
-    fallbackTolerance: 4,
-    delay: isCategorize ? 140 : 80,
-    delayOnTouchOnly: true,
-    onEnd: onItemSortEnd
-  };
-  // 분류 모드: 항목 전체가 드래그 대상, 수정 버튼은 제외. 그 외엔 핸들만.
-  if (isCategorize) {
-    opts.filter = '.btn-rename';
-    opts.preventOnFilter = true;
-  } else {
-    opts.handle = '.drag-handle';
-  }
-
-  // 항목 드래그: 같은 섹션 내 카테고리들 끼리 group
-  document.querySelectorAll('.cat-items').forEach(el => {
-    const section = el.dataset.section;
-    _sortables.push(new Sortable(el, {
-      ...opts,
-      group: 'items-' + section
-    }));
-  });
-
-  // 카테고리 드래그 — 분류 모드에선 비활성 (카테고리 위치 잠금)
-  if (editMode === 'edit') {
-    const catList = document.getElementById('cat-list');
-    if (catList) {
-      _sortables.push(new Sortable(catList, {
-        animation: 150,
-        handle: '.cat-handle',
-        ghostClass: 'sortable-ghost',
-        forceFallback: true,
-        fallbackTolerance: 4,
-        delay: 80,
-        delayOnTouchOnly: true,
-        onEnd: onCatSortEnd
-      }));
-    }
-  }
-}
-
-async function onItemSortEnd(evt) {
-  const fromCat = evt.from.dataset.cat;
-  const toCat   = evt.to.dataset.cat;
-  const section = evt.to.dataset.section;
-  if (!tripId) return;
-
-  const updates = {};
-
-  // 이동된 항목의 카테고리 변경
-  const movedId = evt.item.dataset.id;
-  if (movedId && fromCat !== toCat) {
-    updates[`${DB_ROOT}/${tripId}/items/${movedId}/cat`] = toCat;
-  }
-
-  // 변경된 두 카테고리의 모든 항목 ord를 다시 계산
-  const affectedCats = new Set([fromCat, toCat]);
-  affectedCats.forEach(cat => {
-    const container = document.querySelector(`.cat-items[data-cat="${CSS.escape(cat)}"][data-section="${CSS.escape(section)}"]`);
-    if (!container) return;
-    [...container.querySelectorAll('.itm[data-id]')].forEach((node, idx) => {
-      const id = node.dataset.id;
-      updates[`${DB_ROOT}/${tripId}/items/${id}/ord`] = idx;
-    });
-  });
-
-  if (Object.keys(updates).length) {
-    showSync();
-    await update(ref(db, '/'), updates);
-  }
-}
-
-async function onCatSortEnd(evt) {
-  const section = evt.to.dataset.section;
-  if (!tripId) return;
-  const order = [...document.querySelectorAll(`#cat-list[data-section="${CSS.escape(section)}"] .sec[data-cat]`)]
-    .map(s => s.dataset.cat);
-  const meta = db_data[tripId]?.meta || {};
-  const catOrder = { ...(meta.catOrder || {}) };
-  catOrder[section] = order;
-  await dbUpd(`${DB_ROOT}/${tripId}/meta`, { catOrder });
 }
 
 // ── GLOBAL ACTIONS ─────────────────────
@@ -1252,146 +623,11 @@ const APP = {
   openTrip(id) {
     tripId = id;
     curTab = 'pack';
-    editMode = null;
-    _expandedDecants.clear();
-    _bagFilter = '';
-    _decantOnly = false;
     const m = db_data[id]?.meta || {};
     document.getElementById('hd-name').textContent    = m.name  || '';
     document.getElementById('hd-nights').textContent  = m.nights ? nightsLabel(m.nights) : '';
     document.querySelectorAll('.tab').forEach(t => t.classList.toggle('on', t.dataset.tab==='pack'));
     showScreen('s-trip');
-    renderChecklist();
-  },
-
-  toggleEditMode() {
-    editMode = editMode === 'edit' ? null : 'edit';
-    renderChecklist();
-  },
-
-  toggleCategorizeMode() {
-    if (editMode === 'categorize') { editMode = null; _expandedPouches.clear(); }
-    else editMode = 'categorize';
-    renderChecklist();
-  },
-
-  togglePouch(headerEl) {
-    const pouch = headerEl.closest('.pouch');
-    if (!pouch) return;
-    const cat = pouch.dataset.cat;
-    if (pouch.classList.contains('expanded')) {
-      pouch.classList.remove('expanded');
-      pouch.classList.add('collapsed');
-      _expandedPouches.delete(curTab + ':' + cat);
-    } else {
-      pouch.classList.remove('collapsed');
-      pouch.classList.add('expanded');
-      _expandedPouches.add(curTab + ':' + cat);
-    }
-  },
-
-  toggleFloor() {
-    _floorCollapsed = !_floorCollapsed;
-    renderChecklist();
-  },
-
-  toggleAllPouches() {
-    const allItems = Object.values(db_data[tripId]?.items || {});
-    const cats = getCatOrder(allItems, curTab, db_data[tripId]?.meta).filter(c => c !== FLOOR_CAT);
-    const allExpanded = cats.length > 0 && cats.every(c => _expandedPouches.has(curTab + ':' + c));
-    if (allExpanded) {
-      cats.forEach(c => _expandedPouches.delete(curTab + ':' + c));
-    } else {
-      cats.forEach(c => _expandedPouches.add(curTab + ':' + c));
-    }
-    renderChecklist();
-  },
-
-  openPeriodPicker(itemId, anchor) {
-    document.querySelectorAll('.period-picker').forEach(p => {
-      if (p._closeFn) document.removeEventListener('click', p._closeFn);
-      p.remove();
-    });
-    const item = db_data[tripId]?.items?.[itemId];
-    if (!item) return;
-    const isSet = item.perDayEvery && item.perDayCount;
-    const presets = [
-      {e:1, c:1, l:'매일 1개'},
-      {e:2, c:1, l:'2일에 1개'},
-      {e:3, c:1, l:'3일에 1개'},
-      {e:4, c:1, l:'4일에 1개'},
-      {e:1, c:2, l:'매일 2개'}
-    ];
-    const isCurrent = (e,c) => isSet && +item.perDayEvery===e && +item.perDayCount===c;
-    let html = presets.map(p =>
-      `<button class="${isCurrent(p.e,p.c)?'on':''}" onclick="APP.setPeriod('${itemId}',${p.e},${p.c})">${p.l}</button>`
-    ).join('');
-    if (isSet) html += `<button class="off" onclick="APP.setPeriod('${itemId}',null,null)">해제</button>`;
-    html += `<button class="more" onclick="APP._closePeriodPicker();APP.editItem('${itemId}')">직접…</button>`;
-
-    const picker = document.createElement('div');
-    picker.className = 'period-picker';
-    picker.innerHTML = html;
-    document.body.appendChild(picker);
-
-    const r = anchor.getBoundingClientRect();
-    const pw = picker.offsetWidth;
-    picker.style.top  = (r.bottom + window.scrollY + 4) + 'px';
-    picker.style.left = Math.max(8, Math.min(r.left + window.scrollX, window.innerWidth - pw - 8)) + 'px';
-
-    setTimeout(() => {
-      const close = e => {
-        if (!picker.contains(e.target) && !anchor.contains(e.target)) {
-          APP._closePeriodPicker();
-        }
-      };
-      document.addEventListener('click', close);
-      picker._closeFn = close;
-    }, 0);
-  },
-
-  _closePeriodPicker() {
-    document.querySelectorAll('.period-picker').forEach(p => {
-      if (p._closeFn) document.removeEventListener('click', p._closeFn);
-      p.remove();
-    });
-  },
-
-  async setPeriod(itemId, every, count) {
-    APP._closePeriodPicker();
-    await dbUpd(`${DB_ROOT}/${tripId}/items/${itemId}`, {
-      perDayEvery: every, perDayCount: count
-    });
-  },
-
-  async renameItem(itemId) {
-    const item = db_data[tripId]?.items?.[itemId];
-    if (!item) return;
-    const newName = prompt('항목 이름', item.label);
-    if (newName === null) return;
-    const trimmed = newName.trim();
-    if (!trimmed || trimmed === item.label) return;
-    await dbUpd(`${DB_ROOT}/${tripId}/items/${itemId}`, { label: trimmed });
-  },
-
-  async resetToFloor() {
-    if (!confirm(`"${curTab}" 탭의 모든 항목을 바닥으로 빼고 처음부터 분류할까요?\n(이름·옵션은 그대로 유지됩니다)`)) return;
-    const items = db_data[tripId]?.items || {};
-    const updates = {};
-    Object.entries(items).forEach(([iid, it]) => {
-      if (it.section === curTab && (it.cat||'') !== FLOOR_CAT) {
-        updates[`${DB_ROOT}/${tripId}/items/${iid}/cat`] = FLOOR_CAT;
-      }
-    });
-    if (Object.keys(updates).length) {
-      showSync();
-      await update(ref(db, '/'), updates);
-    }
-  },
-
-  exitEditMode() {
-    editMode = null;
-    _expandedPouches.clear();
     renderChecklist();
   },
 
@@ -1405,127 +641,24 @@ const APP = {
     await dbUpd(`${DB_ROOT}/${tripId}/items/${itemId}`, { localBuy: !item.localBuy, checked: false });
   },
 
-  setBagFilter(val) {
-    _bagFilter = val || '';
-    renderChecklist();
+  toggleDecant(itemId) {
+    document.getElementById('dp-'+itemId)?.classList.toggle('open');
   },
 
-  toggleDecantOnly() {
-    _decantOnly = !_decantOnly;
-    renderChecklist();
-  },
-
-  async cycleBag(itemId) {
-    const item = db_data[tripId]?.items?.[itemId];
-    if (!item) return;
-    const next = item.bag === 'carry' ? 'checked' : 'carry';
-    await dbUpd(`${DB_ROOT}/${tripId}/items/${itemId}`, { bag: next });
-  },
-
-  toggleDecantPanel(itemId) {
-    if (_expandedDecants.has(itemId)) _expandedDecants.delete(itemId);
-    else _expandedDecants.add(itemId);
-    renderChecklist();
-  },
-
-  async enableDecant(itemId) {
-    const item = db_data[tripId]?.items?.[itemId];
-    if (!item) return;
-    _expandedDecants.add(itemId);
-    await dbUpd(`${DB_ROOT}/${tripId}/items/${itemId}`, { hasMl: true });
-  },
-
-  async disableDecant(itemId) {
-    const item = db_data[tripId]?.items?.[itemId];
-    if (!item) return;
-    _expandedDecants.delete(itemId);
-    await dbUpd(`${DB_ROOT}/${tripId}/items/${itemId}`, {
-      hasMl: false, pumpsPerDay: null, mlPerPump: null
-    });
-  },
-
-  async savePump(itemId, ppdVal, mlpVal) {
-    const pumpsPerDay = parseFloat(ppdVal) || null;
-    const mlPerPump   = parseFloat(mlpVal) || null;
-    await dbUpd(`${DB_ROOT}/${tripId}/items/${itemId}`, { pumpsPerDay, mlPerPump });
-  },
-
-  async savePumpField(itemId) {
-    const ppd = document.getElementById('ppd-'+itemId)?.value;
-    const mlp = document.getElementById('mlp-'+itemId)?.value;
-    return APP.savePump(itemId, ppd, mlp);
-  },
-
-  async setPumpSize(itemId, mlp) {
-    const inp = document.getElementById('mlp-'+itemId);
-    if (inp) inp.value = mlp;
-    const ppd = document.getElementById('ppd-'+itemId)?.value;
-    await APP.savePump(itemId, ppd, mlp);
-    renderChecklist();
-  },
-
-  editItem(itemId) {
-    openItemModal(itemId);
-  },
-
-  async deleteItem(itemId) {
-    const item = db_data[tripId]?.items?.[itemId];
-    if (!item) return;
-    if (!confirm(`"${item.label}" 항목을 삭제할까요?`)) return;
-    await dbDel(`${DB_ROOT}/${tripId}/items/${itemId}`);
-  },
-
-  async addCategory(section) {
-    const name = prompt('새 카테고리 이름');
-    if (!name) return;
-    const trimmed = name.trim();
-    if (!trimmed) return;
-    const meta = db_data[tripId]?.meta || {};
-    const catOrder = { ...(meta.catOrder || {}) };
-    const cur = catOrder[section] || [];
-    if (cur.includes(trimmed)) { alert('이미 같은 이름의 카테고리가 있어요'); return; }
-    catOrder[section] = [...cur, trimmed];
-    await dbUpd(`${DB_ROOT}/${tripId}/meta`, { catOrder });
-  },
-
-  async renameCategory(section, oldName) {
-    const newName = prompt('카테고리 이름 변경', oldName);
-    if (!newName) return;
-    const trimmed = newName.trim();
-    if (!trimmed || trimmed === oldName) return;
-    const items = db_data[tripId]?.items || {};
-    const updates = {};
-    Object.entries(items).forEach(([iid, it]) => {
-      if (it.section === section && (it.cat||'기타') === oldName) {
-        updates[`${DB_ROOT}/${tripId}/items/${iid}/cat`] = trimmed;
-      }
-    });
-    const meta = db_data[tripId]?.meta || {};
-    const catOrder = { ...(meta.catOrder || {}) };
-    const cur = catOrder[section] || [];
-    if (cur.length) catOrder[section] = cur.map(c => c === oldName ? trimmed : c);
-    updates[`${DB_ROOT}/${tripId}/meta/catOrder`] = catOrder;
-    showSync();
-    await update(ref(db, '/'), updates);
-  },
-
-  async deleteCategory(section, cat) {
-    const items = db_data[tripId]?.items || {};
-    const inCat = Object.entries(items).filter(([_,it]) => it.section === section && (it.cat||'기타') === cat);
-    if (inCat.length) {
-      if (!confirm(`"${cat}" 카테고리의 항목 ${inCat.length}개도 같이 삭제할까요?`)) return;
-    } else {
-      if (!confirm(`"${cat}" 카테고리를 삭제할까요?`)) return;
+  async saveDecant(itemId, mlVal, cmlVal) {
+    const ml  = parseFloat(mlVal) || null;
+    const cml = parseInt(cmlVal) || 50;
+    await dbUpd(`${DB_ROOT}/${tripId}/items/${itemId}`, { ml, cml });
+    // Update result UI immediately
+    const needed = ml ? calcDecant(ml, cml) : null;
+    const resEl  = document.getElementById('dpr-'+itemId);
+    if (resEl) {
+      resEl.textContent   = needed ? `용기 ${needed}개 필요` : '';
+      resEl.style.display = needed ? '' : 'none';
     }
-    const updates = {};
-    inCat.forEach(([iid]) => { updates[`${DB_ROOT}/${tripId}/items/${iid}`] = null; });
-    const meta = db_data[tripId]?.meta || {};
-    const catOrder = { ...(meta.catOrder || {}) };
-    const cur = catOrder[section] || [];
-    catOrder[section] = cur.filter(c => c !== cat);
-    updates[`${DB_ROOT}/${tripId}/meta/catOrder`] = catOrder;
-    showSync();
-    await update(ref(db, '/'), updates);
+    // Update btn style
+    const btn = document.querySelector(`#itm-${itemId} .btn-decant`);
+    if (btn) btn.classList.toggle('has-val', !!ml);
   }
 };
 window.APP = APP;
@@ -1543,8 +676,6 @@ function openTripModal(id = null) {
   document.getElementById('inp-dest').value  = m.dest  || '';
   document.getElementById('inp-start').value = m.start || '';
   document.getElementById('inp-end').value   = m.end   || '';
-  document.getElementById('inp-blank').checked = false;
-  document.getElementById('row-blank').style.display = isEdit ? 'none' : 'flex';
   updateNightsChip();
   document.getElementById('m-trip').style.display = 'flex';
 }
@@ -1588,10 +719,9 @@ async function saveTripHandler() {
     closeTripModal();
   } else {
     // Create
-    const id    = 'trip_' + Date.now();
-    const blank = document.getElementById('inp-blank').checked;
-    const meta  = { name, dest, start, end, nights, ca: Date.now() };
-    const items = blank ? {} : makeTemplate(nights);
+    const id   = 'trip_' + Date.now();
+    const meta = { name, dest, start, end, nights, ca: Date.now() };
+    const items = makeTemplate(nights);
     await dbSet(`${DB_ROOT}/${id}`, { meta, items });
     closeTripModal();
     APP.openTrip(id);
@@ -1609,91 +739,17 @@ async function deleteTripHandler() {
   renderHome();
 }
 
-// ── ADD/EDIT ITEM MODAL ────────────────
-function openItemModal(itemId = null) {
-  editItemId = itemId;
-  const isEdit = !!itemId;
-  const item   = isEdit ? (db_data[tripId]?.items?.[itemId] || {}) : {};
-
-  document.getElementById('m-item-title').textContent = isEdit ? '항목 수정' : '항목 추가';
-  document.getElementById('btn-save-item').textContent = isEdit ? '저장' : '추가';
-  document.getElementById('btn-del-item').style.display = isEdit ? 'block' : 'none';
-
-  document.getElementById('inp-ilabel').value = item.label || '';
-  document.getElementById('inp-icat').value   = item.cat   || '';
-  document.getElementById('inp-itab').value   = item.section || (curTab==='local'?'local':curTab==='todo'?'todo':curTab==='recommend'?'recommend':'pack');
-
-  // 카테고리 자동완성 채우기
-  const dl = document.getElementById('cat-suggest');
-  const cats = new Set();
-  Object.values(db_data[tripId]?.items||{}).forEach(i => { if (i.cat) cats.add(i.cat); });
-  dl.innerHTML = [...cats].map(c => `<option value="${esc(c)}">`).join('');
-
-  // 현지 구매
-  document.getElementById('inp-ilocal').checked = !!item.localBuy;
-
-  // 수하물 분류 (carry / checked)
-  document.getElementById('inp-ibag').value = item.bag === 'carry' ? 'carry' : 'checked';
-
-  // 특이 표시 (휴대용 등)
-  document.getElementById('inp-iti').value = item.ti || '';
-  document.getElementById('inp-itt').value = item.tt || '';
-
-  // 정기 사용량
-  const pdOn = !!(item.perDayEvery && item.perDayCount);
-  document.getElementById('inp-ipd-on').checked = pdOn;
-  document.getElementById('inp-ipd-box').style.display = pdOn ? 'flex' : 'none';
-  document.getElementById('inp-ipd-every').value = item.perDayEvery || 1;
-  document.getElementById('inp-ipd-count').value = item.perDayCount || 1;
-  refreshPdChipState();
-  updatePdPreview();
-
-  // 펌프 / 소분
-  document.getElementById('inp-iml').checked = !!item.hasMl;
-  document.getElementById('inp-ipump-box').style.display = item.hasMl ? 'flex' : 'none';
-  document.getElementById('inp-ipump-pd').value  = item.pumpsPerDay || '';
-  document.getElementById('inp-ipump-mlp').value = item.mlPerPump   || '';
-  refreshPumpChipState();
-  updatePumpPreview();
-
+// ── ADD ITEM MODAL ─────────────────────
+function openAddModal() {
+  document.getElementById('inp-ilabel').value = '';
+  document.getElementById('inp-icat').value   = '';
+  document.getElementById('inp-itab').value   = curTab==='local'?'local':curTab==='todo'?'todo':curTab==='recommend'?'recommend':'pack';
+  document.getElementById('inp-iml').checked  = false;
   document.getElementById('m-item').style.display = 'flex';
 }
 
-function closeItemModal() {
+function closeAddModal() {
   document.getElementById('m-item').style.display = 'none';
-  editItemId = null;
-}
-
-function updatePdPreview() {
-  const on    = document.getElementById('inp-ipd-on').checked;
-  const every = parseInt(document.getElementById('inp-ipd-every').value) || 0;
-  const count = parseInt(document.getElementById('inp-ipd-count').value) || 0;
-  const nights= db_data[tripId]?.meta?.nights || 0;
-  const el    = document.getElementById('inp-ipd-preview');
-  if (on && every > 0 && count > 0) {
-    const q = calcQtyPeriodic(every, count, nights);
-    el.textContent = nights > 0 ? `${nights}박 ${nights+1}일 → 총 ${q}개 필요` : `1일 기준 ${count}개 (출발일 미정)`;
-    el.style.display = 'block';
-  } else {
-    el.style.display = 'none';
-  }
-}
-
-function updatePumpPreview() {
-  const on  = document.getElementById('inp-iml').checked;
-  const ppd = parseFloat(document.getElementById('inp-ipump-pd').value) || 0;
-  const mlp = parseFloat(document.getElementById('inp-ipump-mlp').value) || 0;
-  const nights = db_data[tripId]?.meta?.nights || 0;
-  const el  = document.getElementById('inp-ipump-preview');
-  if (on && ppd > 0 && mlp > 0) {
-    const days   = Math.max(1, nights + 1);
-    const totalP = +(ppd * days).toFixed(1);
-    const totalM = +(ppd * mlp * days).toFixed(2);
-    el.textContent = `${days}일 × ${ppd}펌프 = 총 ${totalP}펌프 = ${totalM}ml`;
-    el.style.display = 'block';
-  } else {
-    el.style.display = 'none';
-  }
 }
 
 async function saveItemHandler() {
@@ -1701,129 +757,31 @@ async function saveItemHandler() {
   const cat    = document.getElementById('inp-icat').value.trim() || '기타';
   const section= document.getElementById('inp-itab').value;
   const hasMl  = document.getElementById('inp-iml').checked;
-  const localBuy = document.getElementById('inp-ilocal').checked;
-  const pdOn   = document.getElementById('inp-ipd-on').checked;
-  const pdEvery= pdOn ? (parseInt(document.getElementById('inp-ipd-every').value) || null) : null;
-  const pdCount= pdOn ? (parseInt(document.getElementById('inp-ipd-count').value) || null) : null;
-  const ppd    = hasMl ? (parseFloat(document.getElementById('inp-ipump-pd').value) || null) : null;
-  const mlp    = hasMl ? (parseFloat(document.getElementById('inp-ipump-mlp').value) || null) : null;
-  const ttVal  = document.getElementById('inp-itt').value.trim();
-  const tiVal  = document.getElementById('inp-iti').value;
-  const ti     = (ttVal && tiVal) ? tiVal : (ttVal ? 'info' : null);
-  const tt     = ttVal || null;
-  const bag    = document.getElementById('inp-ibag').value === 'carry' ? 'carry' : 'checked';
   if (!label) { alert('항목 이름을 입력해주세요'); return; }
-
-  if (editItemId) {
-    const cur = db_data[tripId]?.items?.[editItemId] || {};
-    const becameLocal = localBuy && !cur.localBuy;
-    await dbUpd(`${DB_ROOT}/${tripId}/items/${editItemId}`, {
-      label, cat, section, localBuy,
-      perDayEvery: pdEvery, perDayCount: pdCount,
-      hasMl,
-      pumpsPerDay: ppd, mlPerPump: mlp,
-      ti, tt, bag,
-      // 현지구매로 새로 전환되면 체크 해제
-      ...(becameLocal ? { checked:false } : {}),
-      // 소분 끄면 펌프 초기화
-      ...(hasMl ? {} : { pumpsPerDay:null, mlPerPump:null })
-    });
-    closeItemModal();
-    return;
-  }
-
   const existCount = Object.keys(db_data[tripId]?.items||{}).length;
   const id = 'i' + Date.now();
   await dbSet(`${DB_ROOT}/${tripId}/items/${id}`, {
     id, label, cat, sub:null, section,
-    checked:false, localBuy,
+    checked:false, localBuy:false,
     qty:null, qtyF:null,
-    perDayEvery: pdEvery, perDayCount: pdCount,
-    hasMl,
-    pumpsPerDay: ppd, mlPerPump: mlp,
-    ti, tt, bag, ord: existCount
+    hasMl, ml:null, cml:50,
+    ti:null, tt:null, ord: existCount
   });
-  closeItemModal();
-}
-
-async function deleteItemFromModal() {
-  if (!editItemId) return;
-  const item = db_data[tripId]?.items?.[editItemId];
-  if (!item) return;
-  if (!confirm(`"${item.label}" 항목을 삭제할까요?`)) return;
-  await dbDel(`${DB_ROOT}/${tripId}/items/${editItemId}`);
-  closeItemModal();
+  closeAddModal();
 }
 
 // ── EVENTS ─────────────────────────────
-document.getElementById('btn-new').onclick       = () => openTripModal(null);
-document.getElementById('btn-edit').onclick      = () => openTripModal(tripId);
-document.getElementById('btn-edit-mode').onclick = () => APP.toggleEditMode();
-document.getElementById('btn-categorize').onclick= () => APP.toggleCategorizeMode();
-document.getElementById('btn-save-edit').onclick = () => APP.exitEditMode();
-document.getElementById('btn-back').onclick      = () => { tripId=null; editMode=null; _expandedDecants.clear(); destroySortables(); showScreen('s-home'); renderHome(); };
+document.getElementById('btn-new').onclick      = () => openTripModal(null);
+document.getElementById('btn-edit').onclick     = () => openTripModal(tripId);
+document.getElementById('btn-back').onclick     = () => { tripId=null; showScreen('s-home'); renderHome(); };
 document.getElementById('btn-save-trip').onclick = saveTripHandler;
 document.getElementById('btn-del-trip').onclick  = deleteTripHandler;
 document.getElementById('m-trip-close').onclick  = closeTripModal;
-document.getElementById('btn-add-item').onclick  = () => openItemModal(null);
+document.getElementById('btn-add-item').onclick  = openAddModal;
 document.getElementById('btn-save-item').onclick = saveItemHandler;
-document.getElementById('btn-del-item').onclick  = deleteItemFromModal;
-document.getElementById('m-item-close').onclick  = closeItemModal;
+document.getElementById('m-item-close').onclick  = closeAddModal;
 document.getElementById('inp-start').addEventListener('change', updateNightsChip);
 document.getElementById('inp-end').addEventListener('change', updateNightsChip);
-
-// 모달 내 정기/펌프 옵션 토글 + 미리보기
-document.getElementById('inp-ipd-on').addEventListener('change', e => {
-  document.getElementById('inp-ipd-box').style.display = e.target.checked ? 'flex' : 'none';
-  updatePdPreview();
-});
-document.getElementById('inp-ipd-every').addEventListener('input', updatePdPreview);
-document.getElementById('inp-ipd-count').addEventListener('input', updatePdPreview);
-document.getElementById('inp-iml').addEventListener('change', e => {
-  document.getElementById('inp-ipump-box').style.display = e.target.checked ? 'flex' : 'none';
-  updatePumpPreview();
-});
-document.getElementById('inp-ipump-pd').addEventListener('input', updatePumpPreview);
-document.getElementById('inp-ipump-mlp').addEventListener('input', () => { updatePumpPreview(); refreshPumpChipState(); });
-
-// 정기 사용량 프리셋 칩
-document.getElementById('pd-presets').addEventListener('click', e => {
-  const chip = e.target.closest('.pump-chip');
-  if (!chip) return;
-  document.getElementById('inp-ipd-on').checked = true;
-  document.getElementById('inp-ipd-box').style.display = 'flex';
-  document.getElementById('inp-ipd-every').value = chip.dataset.every;
-  document.getElementById('inp-ipd-count').value = chip.dataset.count;
-  refreshPdChipState();
-  updatePdPreview();
-});
-
-// 펌프 사이즈 프리셋 칩 (모달)
-document.getElementById('pump-size-presets').addEventListener('click', e => {
-  const chip = e.target.closest('.pump-chip');
-  if (!chip) return;
-  document.getElementById('inp-iml').checked = true;
-  document.getElementById('inp-ipump-box').style.display = 'flex';
-  document.getElementById('inp-ipump-mlp').value = chip.dataset.mlp;
-  refreshPumpChipState();
-  updatePumpPreview();
-});
-
-function refreshPdChipState() {
-  const e = parseInt(document.getElementById('inp-ipd-every').value) || 0;
-  const c = parseInt(document.getElementById('inp-ipd-count').value) || 0;
-  document.querySelectorAll('#pd-presets .pump-chip').forEach(ch => {
-    ch.classList.toggle('on', +ch.dataset.every===e && +ch.dataset.count===c);
-  });
-}
-function refreshPumpChipState() {
-  const v = parseFloat(document.getElementById('inp-ipump-mlp').value) || 0;
-  document.querySelectorAll('#pump-size-presets .pump-chip').forEach(ch => {
-    ch.classList.toggle('on', Math.abs(+ch.dataset.mlp - v) < 0.01);
-  });
-}
-document.getElementById('inp-ipd-every').addEventListener('input', refreshPdChipState);
-document.getElementById('inp-ipd-count').addEventListener('input', refreshPdChipState);
 
 document.querySelectorAll('.tab').forEach(t => {
   t.onclick = function() {
@@ -1834,55 +792,23 @@ document.querySelectorAll('.tab').forEach(t => {
   };
 });
 
-// 동적으로 생성된 "+ 새 카테고리" 버튼 처리
-document.getElementById('cl-content').addEventListener('click', e => {
-  const btn = e.target.closest('.add-cat-btn');
-  if (btn) APP.addCategory(btn.dataset.section);
-});
-
 document.querySelectorAll('.modal-overlay').forEach(o => {
   o.onclick = e => { if (e.target === o) o.style.display = 'none'; };
 });
 
 // ── PWA MANIFEST ───────────────────────
-// 안드로이드 WebAPK는 PNG 아이콘일 때 가장 안정적이고 크롬 배지 없는
-// 진짜 앱으로 설치됨. SVG는 보조로 추가, 콘텐츠가 중앙 80% 안전
-// 영역 안에 있어 maskable 크롭에도 잘리지 않음.
-const ICON_PNG_192 = '/JIMSSAGI/icon-192.png';
-const ICON_PNG_512 = '/JIMSSAGI/icon-512.png';
-const ICON_SVG     = '/JIMSSAGI/icon.svg';
-
 const mani = JSON.stringify({
   name:'짐싸기', short_name:'짐싸기',
   start_url:'/JIMSSAGI/',
   scope:'/JIMSSAGI/',
   display:'standalone',
-  background_color:'#6b5ce7', theme_color:'#6b5ce7',
-  icons:[
-    {src:ICON_PNG_192, sizes:'192x192', type:'image/png', purpose:'any maskable'},
-    {src:ICON_PNG_512, sizes:'512x512', type:'image/png', purpose:'any maskable'},
-    {src:ICON_SVG,     sizes:'any',     type:'image/svg+xml', purpose:'any maskable'}
-  ]
+  background_color:'#f7f6f2', theme_color:'#6b5ce7',
+  icons:[{src:'data:image/svg+xml,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><text y=".9em" font-size="90">🧳</text></svg>',sizes:'any',type:'image/svg+xml'}]
 });
 const mLink = document.createElement('link');
 mLink.rel = 'manifest';
 mLink.href = URL.createObjectURL(new Blob([mani], {type:'application/json'}));
 document.head.appendChild(mLink);
-
-// iOS 홈 화면 아이콘
-const apl = document.createElement('link');
-apl.rel = 'apple-touch-icon';
-apl.href = ICON_PNG_192;
-document.head.appendChild(apl);
-
-// ── SERVICE WORKER (PWA installability) ──
-if ('serviceWorker' in navigator) {
-  window.addEventListener('load', () => {
-    navigator.serviceWorker.register('./sw.js').catch(err => {
-      console.warn('SW register failed:', err);
-    });
-  });
-}
 
 // ── FIREBASE LISTENER + INIT ────────────
 onValue(ref(db, DB_ROOT), snap => {
