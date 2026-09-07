@@ -191,7 +191,9 @@ body{font-family:'Noto Sans KR',sans-serif;background:var(--bg);color:var(--text
     <div class="modal-hd"><span>항목 추가</span><button class="modal-close" id="m-item-close">×</button></div>
     <div class="modal-body">
       <label>항목 이름</label><input type="text" id="inp-ilabel" placeholder="예: 선글라스">
-      <label>카테고리</label><input type="text" id="inp-icat" placeholder="예: 가방·소지품">
+      <label>카테고리</label>
+      <input type="text" id="inp-icat" placeholder="선택하거나 직접 입력" list="cat-list">
+      <datalist id="cat-list"></datalist>
       <label>탭</label>
       <select id="inp-itab">
         <option value="pack">짐 목록</option>
@@ -565,6 +567,11 @@ async function deleteTripHandler(){
 }
 
 // ITEM MODAL
+function populateCatList(section){
+  const allItems=Object.values(db_data[tripId]?.items||{});
+  const cats=[...new Set(allItems.filter(i=>i.section===section).map(i=>i.cat||'').filter(Boolean))];
+  document.getElementById('cat-list').innerHTML=cats.map(c=>`<option value="${esc(c)}">`).join('');
+}
 function openAddModal(item=null){
   editItemId=item?item.id:null;
   document.querySelector('#m-item .modal-hd span').textContent=item?'항목 수정':'항목 추가';
@@ -573,7 +580,9 @@ function openAddModal(item=null){
   document.getElementById('inp-icat').value=item?(item.cat||''):'';
   document.getElementById('inp-itab').value=item?item.section:(curTab==='local'?'local':curTab==='todo'?'todo':curTab==='recommend'?'recommend':'pack');
   document.getElementById('inp-iml').checked=item?!!item.hasMl:false;
-  document.getElementById('ml-row').style.display=document.getElementById('inp-itab').value==='pack'?'':'none';
+  const sec=document.getElementById('inp-itab').value;
+  document.getElementById('ml-row').style.display=sec==='pack'?'':'none';
+  populateCatList(sec);
   document.getElementById('m-item').style.display='flex';
 }
 function closeAddModal(){document.getElementById('m-item').style.display='none';editItemId=null;}
@@ -608,6 +617,7 @@ document.getElementById('inp-start').addEventListener('change',updateNightsChip)
 document.getElementById('inp-end').addEventListener('change',updateNightsChip);
 document.getElementById('inp-itab').addEventListener('change',function(){
   document.getElementById('ml-row').style.display=this.value==='pack'?'':'none';
+  populateCatList(this.value);
 });
 document.querySelectorAll('.tab').forEach(t=>{
   t.onclick=function(){
